@@ -1,0 +1,27 @@
+:root {
+  --bg-deep: #04101a;
+  --bg-shell: #061721;
+  --panel: rgba(5, 25, 41, .9);
+  --panel-strong: #071e30;
+  --line: #0b5c86;
+  --line-soft: rgba(36, 129, 171, .42);
+  --cyan: #18c8ff;
+  --cyan-soft: #57d8ff;
+  --blue: #1377c9;
+  --text: #d4f5ff;
+  --muted: #6f9bb1;
+  --green: #23d394;
+  --yellow: #f4bd48;
+  --orange: #ff8d26;
+  --red: #ff4e58;
+  font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+  color: var(--text);
+  background: var(--bg-deep);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* { box-sizing: border-box; }
+html, body, #app { min-width: 1100px; min-height: 100%; margin: 0; }
+body { min-height: 100vh; overflow-x: auto; background: var(--bg-deep); }
+button, input { font: inherit; }
