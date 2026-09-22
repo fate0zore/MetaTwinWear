@@ -1,7 +1,9 @@
 <template>
   <header class="dashboard-header">
     <div class="brand-lockup">
-      <div class="brand-logo"><el-icon :size="26"><Cpu /></el-icon></div>
+      <div class="brand-logo">
+        <img :src="swjtuCrest" alt="西南交通大学" />
+      </div>
       <div>
         <div class="brand-title">刀具磨损智能监测与预测系统</div>
         <div class="brand-subtitle">TOOL WEAR INTELLIGENT MONITORING</div>
@@ -35,7 +37,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
-import { Bell, Clock, Cpu, DataAnalysis, Monitor, Setting, Warning } from '@element-plus/icons-vue'
+import { Bell, Clock, DataAnalysis, Monitor, Setting, Warning } from '@element-plus/icons-vue'
+import swjtuCrest from '@/assets/dashboard/swjtu-crest.png'
 
 const route = useRoute()
 const now = ref(new Date())

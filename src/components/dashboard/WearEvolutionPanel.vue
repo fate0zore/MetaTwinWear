@@ -1,33 +1,111 @@
 <template>
   <DashboardPanel title="刀具局部磨损演化" :icon="Picture" :no-padding="true">
-    <div class="wear-evolution-head"><span>局部磨损图像序列</span><strong>当前阶段：{{ store.wear.stage }}</strong></div>
-    <div class="wear-evolution-grid">
-      <div v-for="stage in stages" :key="stage.label" class="evolution-card" :class="{ 'is-active': stage.active }">
-        <div class="evolution-image reference-crop" :class="stage.className" :style="referenceStyle"></div>
-        <div class="evolution-caption"><span>{{ stage.label }}</span><small>{{ stage.note }}</small></div>
+    <div class="wear-sampling-head">
+      <span>历史磨损数据</span>
+      <strong>窗口：6 · 当前阶段：{{ store.wear.stage }}</strong>
+    </div>
+
+    <div class="wear-sampling-strip" role="list" aria-label="历史磨损采样">
+      <button
+        v-for="sample in samples"
+        :key="sample.id"
+        type="button"
+        class="wear-sample-card"
+        :class="{ 'is-active': selectedSample.id === sample.id }"
+        :aria-label="`${sample.time}，磨损 ${sample.wear.toFixed(2)} mm`"
+        @mouseenter="selectSample(sample)"
+        @focus="selectSample(sample)"
+      >
+        <span class="wear-sample-thumb" :style="getSampleImageStyle(sample, false)"></span>
+        <span class="wear-sample-time">{{ sample.time }}</span>
+        <strong>{{ sample.wear.toFixed(2) }} mm</strong>
+      </button>
+    </div>
+
+    <div class="wear-detail-view">
+      <div class="wear-detail-image" :style="getSampleImageStyle(selectedSample, true)"></div>
+      <div class="wear-detail-caption">
+        <span>完整磨损图像</span>
+        <small>采样时间：{{ selectedSample.time }}</small>
       </div>
     </div>
-    <div class="wear-evolution-footer">
-      <div class="evolution-meter"><span>磨损演化进度</span><div class="evolution-meter-track"><i :style="{ width: `${Math.min(100, store.wear.currentWear / store.wear.threshold * 100)}%` }"></i></div><b>{{ Math.round(store.wear.currentWear / store.wear.threshold * 100) }}%</b></div>
-      <div class="evolution-stage-labels"><span>初始状态</span><span>轻微磨损</span><span>稳定磨损</span><span>加速磨损</span><span>临界失效</span></div>
+
+    <div class="wear-current-info">
+      <span>当前磨损</span>
+      <strong>{{ selectedSample.wear.toFixed(2) }} mm</strong>
+      <small>悬停上方缩略图查看对应采样</small>
     </div>
   </DashboardPanel>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { Picture } from '@element-plus/icons-vue'
 
 import referenceDesign from '@/assets/dashboard/reference-design.png'
 import DashboardPanel from './DashboardPanel.vue'
 import { useDashboardStore } from '@/stores/dashboard'
+import type { TimePoint } from '@/types/dashboard'
+
+interface WearSample {
+  id: string
+  time: string
+  wear: number
+  thumbnailPosition: string
+  detailPosition: string
+  imageUrl?: string
+}
 
 const store = useDashboardStore()
-const referenceStyle = computed(() => ({ backgroundImage: `url(${referenceDesign})` }))
-const stages = computed(() => [
-  { label: '初始状态', note: '刃口完整', className: 'stage-initial', active: store.wear.stage === '初始状态' },
-  { label: '轻微磨损', note: '磨损可控', className: 'stage-light', active: store.wear.stage === '轻微磨损' },
-  { label: '加速磨损', note: '需要关注', className: 'stage-accelerated', active: store.wear.stage === '加速磨损' },
-  { label: '临界失效', note: '建议换刀', className: 'stage-critical', active: store.wear.stage === '临界状态' },
-])
+
+// 这些位置暂时复用设计稿中的磨损图像。接入 n 秒采样接口后，可直接填充 imageUrl。
+const sampleCrops = [
+  { thumbnailPosition: '-1131px -780px', detailPosition: 'calc(50% - 402px) calc(50% - 640px)' },
+  { thumbnailPosition: '-1162px -780px', detailPosition: 'calc(50% - 464px) calc(50% - 640px)' },
+  { thumbnailPosition: '-1194px -780px', detailPosition: 'calc(50% - 528px) calc(50% - 640px)' },
+  { thumbnailPosition: '-1225px -780px', detailPosition: 'calc(50% - 590px) calc(50% - 640px)' },
+  { thumbnailPosition: '-1256px -780px', detailPosition: 'calc(50% - 652px) calc(50% - 640px)' },
+  { thumbnailPosition: '-1316px -780px', detailPosition: 'calc(50% - 772px) calc(50% - 640px)' },
+]
+
+const selectedSampleId = ref<string | null>(null)
+
+const samples = computed<WearSample[]>(() => {
+  const history = store.wearHistory.slice(-6)
+  return history.map((point: TimePoint, index) => {
+    const crop = sampleCrops[index]
+    return {
+      id: `${point.time}-${point.value}`,
+      time: point.time,
+      wear: point.value,
+      thumbnailPosition: crop.thumbnailPosition,
+      detailPosition: crop.detailPosition,
+    }
+  })
+})
+
+const emptySample: WearSample = {
+  id: 'empty',
+  time: '--',
+  wear: 0,
+  thumbnailPosition: '-1131px -780px',
+  detailPosition: 'calc(50% - 402px) calc(50% - 640px)',
+}
+
+const selectedSample = computed<WearSample>(() => {
+  return samples.value.find((sample) => sample.id === selectedSampleId.value)
+    ?? samples.value[samples.value.length - 1]
+    ?? emptySample
+})
+
+const selectSample = (sample: WearSample) => {
+  selectedSampleId.value = sample.id
+}
+
+const getSampleImageStyle = (sample: WearSample, detail: boolean) => ({
+  backgroundImage: `url(${sample.imageUrl ?? referenceDesign})`,
+  backgroundPosition: sample.imageUrl ? 'center' : detail ? sample.detailPosition : sample.thumbnailPosition,
+  backgroundSize: sample.imageUrl ? 'contain' : detail ? '3840px 2060px' : '1920px 1030px',
+  backgroundRepeat: 'no-repeat',
+})
 </script>

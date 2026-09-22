@@ -1,5 +1,5 @@
 <template>
-  <DashboardPanel title="设备工艺参数监听（Mock）" :icon="Connection" :no-padding="true">
+  <DashboardPanel class="process-parameter-panel" title="设备工艺参数监听（Mock）" :icon="Connection" :no-padding="true">
     <template #actions>
       <span class="chart-live-status"><i></i>{{ store.monitoring ? '实时采集中' : '等待监听' }}</span>
     </template>
@@ -29,8 +29,8 @@ const makeOption = (values: number[], color: string, unit: string): EChartsOptio
     animation: false,
     grid: { left: 31, right: 8, top: 12, bottom: 22 },
     tooltip: { trigger: 'axis', backgroundColor: '#071b2b', borderColor: '#12648b', textStyle: { color: '#bfefff' } },
-    xAxis: { type: 'category', data: store.processHistory.map((item) => item.time), axisLabel: { color: '#60859b', fontSize: 8, interval: 9 }, axisLine: { lineStyle: { color: '#174a67' } }, boundaryGap: false },
-    yAxis: { type: 'value', name: unit, nameTextStyle: { color: '#60859b', fontSize: 8 }, axisLabel: { color: '#60859b', fontSize: 8 }, splitLine: { lineStyle: { color: 'rgba(43, 104, 137, .18)' } } },
+    xAxis: { type: 'category', data: store.processHistory.map((item) => item.time), axisLabel: { color: '#60859b', fontSize: 12, interval: 9 }, axisLine: { lineStyle: { color: '#174a67' } }, boundaryGap: false },
+    yAxis: { type: 'value', name: unit, nameTextStyle: { color: '#60859b', fontSize: 12 }, axisLabel: { color: '#60859b', fontSize: 12 }, splitLine: { lineStyle: { color: 'rgba(43, 104, 137, .18)' } } },
     series: [{ type: 'line', data: values, symbol: 'none', smooth: true, lineStyle: { color, width: 1.8 }, itemStyle: { color }, areaStyle: { color: `${color}18` } }],
   })
 

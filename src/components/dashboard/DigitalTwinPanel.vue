@@ -1,5 +1,5 @@
 <template>
-  <DashboardPanel title="刀具当前位置 · 实时数字孪生" :icon="Grid" :no-padding="true">
+  <DashboardPanel class="digital-twin-panel" title="刀具当前位置 · 实时数字孪生" :icon="Grid" :no-padding="true">
     <div class="twin-stage">
       <div class="machine-background">
         <div class="machine-grid"></div>

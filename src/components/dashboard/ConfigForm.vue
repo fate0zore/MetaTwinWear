@@ -6,21 +6,19 @@
 
     <div class="readonly-section-title"><el-icon><Aim /></el-icon> 刀具信息</div>
     <div class="parameter-display-list">
-      <div class="parameter-display-row"><span>刀具型号</span><el-select v-model="store.tool.model" class="parameter-display-select" popper-class="dashboard-select-popper"><el-option v-for="item in mockOptions.toolModels" :key="item" :label="item" :value="item" /></el-select></div>
-      <div class="parameter-display-row"><span>刀具类型</span><el-select v-model="store.tool.type" class="parameter-display-select" popper-class="dashboard-select-popper"><el-option v-for="item in mockOptions.toolTypes" :key="item" :label="item" :value="item" /></el-select></div>
-      <div class="parameter-display-row"><span>刀具直径 (mm)</span><el-select v-model="store.tool.diameter" class="parameter-display-select" popper-class="dashboard-select-popper"><el-option v-for="item in mockOptions.diameters" :key="item" :label="String(item)" :value="item" /></el-select></div>
-      <div class="parameter-display-row"><span>刀具长度 (mm)</span><el-select v-model="store.tool.length" class="parameter-display-select" popper-class="dashboard-select-popper"><el-option v-for="item in mockOptions.lengths" :key="item" :label="String(item)" :value="item" /></el-select></div>
-      <div class="parameter-display-row"><span>刀齿数量</span><el-select v-model="store.tool.toothCount" class="parameter-display-select" popper-class="dashboard-select-popper"><el-option v-for="item in mockOptions.toothCounts" :key="item" :label="String(item)" :value="item" /></el-select></div>
-      <div class="parameter-display-row"><span>刀具材料</span><el-select v-model="store.tool.material" class="parameter-display-select" popper-class="dashboard-select-popper"><el-option v-for="item in mockOptions.materials" :key="item" :label="item" :value="item" /></el-select></div>
+      <div class="parameter-display-row"><span>刀具型号</span><el-select v-model="store.tool.model" class="parameter-display-select" filterable popper-class="dashboard-select-popper"><el-option v-for="item in mockOptions.toolModels" :key="item" :label="item" :value="item" /></el-select></div>
+      <div class="parameter-display-row"><span>刀具类型</span><el-select v-model="store.tool.type" class="parameter-display-select" filterable popper-class="dashboard-select-popper"><el-option v-for="item in mockOptions.toolTypes" :key="item" :label="item" :value="item" /></el-select></div>
+      <div class="parameter-display-row"><span>刀具直径 (mm)</span><el-select v-model="store.tool.diameter" class="parameter-display-select" filterable popper-class="dashboard-select-popper"><el-option v-for="item in mockOptions.diameters" :key="item" :label="String(item)" :value="item" /></el-select></div>
+      <div class="parameter-display-row"><span>刀具长度 (mm)</span><el-select v-model="store.tool.length" class="parameter-display-select" filterable popper-class="dashboard-select-popper"><el-option v-for="item in mockOptions.lengths" :key="item" :label="String(item)" :value="item" /></el-select></div>
+      <div class="parameter-display-row"><span>刀齿数量</span><el-select v-model="store.tool.toothCount" class="parameter-display-select" filterable popper-class="dashboard-select-popper"><el-option v-for="item in mockOptions.toothCounts" :key="item" :label="String(item)" :value="item" /></el-select></div>
+      <div class="parameter-display-row"><span>刀具材料</span><el-select v-model="store.tool.material" class="parameter-display-select" filterable popper-class="dashboard-select-popper"><el-option v-for="item in mockOptions.materials" :key="item" :label="item" :value="item" /></el-select></div>
     </div>
 
     <div class="readonly-section-title"><el-icon><Box /></el-icon> 工件信息</div>
     <div class="parameter-display-list">
-      <div class="parameter-display-row"><span>工件尺寸 (mm)</span><el-select v-model="store.workpiece.size" class="parameter-display-select" popper-class="dashboard-select-popper"><el-option v-for="item in mockOptions.workpieceSizes" :key="item" :label="item" :value="item" /></el-select></div>
-      <div class="parameter-display-row"><span>工件材料</span><el-select v-model="store.workpiece.material" class="parameter-display-select" popper-class="dashboard-select-popper"><el-option v-for="item in mockOptions.workpieceMaterials" :key="item" :label="item" :value="item" /></el-select></div>
+      <div class="parameter-display-row"><span>工件尺寸 (mm)</span><el-select v-model="store.workpiece.size" class="parameter-display-select" filterable popper-class="dashboard-select-popper"><el-option v-for="item in mockOptions.workpieceSizes" :key="item" :label="item" :value="item" /></el-select></div>
+      <div class="parameter-display-row"><span>工件材料</span><el-select v-model="store.workpiece.material" class="parameter-display-select" filterable popper-class="dashboard-select-popper"><el-option v-for="item in mockOptions.workpieceMaterials" :key="item" :label="item" :value="item" /></el-select></div>
     </div>
-
-    <slot name="process-replacement" />
 
     <div class="device-meta-grid">
       <div><span>数据来源</span><strong>设备模拟器</strong></div>
@@ -35,6 +33,8 @@
       </el-button>
       <el-button class="reset-button" @click="emit('reset')"><el-icon><Refresh /></el-icon>重置 mock</el-button>
     </div>
+
+    <slot name="process-replacement" />
   </DashboardPanel>
 
   <div class="tool-preview-card">
