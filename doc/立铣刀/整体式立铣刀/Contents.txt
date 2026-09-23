@@ -1,0 +1,11 @@
+Contents
+--------
+
+                           3D Model Basic                       3D Model Detailed                       2D Drawing                     Description                                GTC package
+2F365-0600-050-TD   1745   -                                    -                                       -                              2F365-0600-050-TD   1745-description.zip   -
+2F365-0800-050-TD   1745   -                                    -                                       -                              2F365-0800-050-TD   1745-description.zip   -
+2F366-1000-050-TD   1745   -                                    -                                       -                              2F366-1000-050-TD   1745-description.zip   -
+2F366-1200-050-TD   1745   -                                    -                                       -                              2F366-1200-050-TD   1745-description.zip   -
+2F366-1600-050-TD   1745   -                                    -                                       -                              2F366-1600-050-TD   1745-description.zip   -
+2F366-2000-050-TD   1745   -                                    -                                       -                              2F366-2000-050-TD   1745-description.zip   -
+2F366-2500-050-TD   1745   -                                    -                                       -                              2F366-2500-050-TD   1745-description.zip   -

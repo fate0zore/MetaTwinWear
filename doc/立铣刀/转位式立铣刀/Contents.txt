@@ -1,0 +1,10 @@
+Contents
+--------
+
+                    3D Model Basic                3D Model Detailed                2D Drawing              Description                         GTC package
+MS20-R016A16-10L    -                             -                                -                       MS20-R016A16-10L-description.zip    -
+MS20-R018A16L-10L   -                             -                                -                       MS20-R018A16L-10L-description.zip   -
+MS20-R020A20L-10L   -                             -                                -                       MS20-R020A20L-10L-description.zip   -
+MS20-R025A25L-10L   -                             -                                -                       MS20-R025A25L-10L-description.zip   -
+MS20-R030A25L-10L   -                             -                                -                       MS20-R030A25L-10L-description.zip   -
+MS20-R040A32L-10L   -                             -                                -                       MS20-R040A32L-10L-description.zip   -
