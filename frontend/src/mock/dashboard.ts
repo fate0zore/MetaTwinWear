@@ -132,6 +132,7 @@ export const initialDashboardState: DashboardState = {
   apiReady: false,
   sampledAt: null,
   configSaving: false,
+  toolCatalog: [],
   configOptions: mockConfigurationOptions,
   serverRecommendations: [],
   activeAlert: null,

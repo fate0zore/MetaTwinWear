@@ -87,6 +87,8 @@ curl -N http://localhost:8080/api/v1/monitoring/events
 
 `start`、`stop` 为幂等控制，`reset` 停止监听、恢复默认配置并创建新运行；旧运行与采样保留。所有访问者共用一个模拟器和配置，无登录。采样约每秒一次，长期保留；图表只读取当前运行最近 42 个采样。过程参数和磨损阈值首期只读。告警关闭状态仅保存在当前浏览器页面。完整接口见 [OpenAPI 文档](backend/openapi.yaml)。
 
+刀具目录由 Flyway 从 `doc/立铣刀` 的参数表与产品 CSV 初始化，仪表盘通过 `/api/v1/tools` 搜索型号并读取对应主图。图片通过后端接口从仓库 `doc/` 目录提供；从其他工作目录启动后端时，可用 `METATWINWEAR_TOOL_IMAGE_ROOT` 指向该目录。
+
 ## 后续迁至 PostgreSQL
 
 本期没有 PostgreSQL 建表或导入逻辑，也不会接触其他项目数据库。迁移时按 [字段与导出约定](backend/DATA_MIGRATION.md) 新增 PostgreSQL 迁移脚本和导入程序，保留运行、配置、采样的 ID、时间戳与关系。

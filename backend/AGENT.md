@@ -77,7 +77,10 @@
 
 ### 必须
 
-- 接口变更同步更新 `backend/openapi.yaml`，保持 `/api/v1/**` 网关路由；除非需求明确修改，否则保持现有响应形态，不自行增加统一响应包装。错误响应沿用 Spring `ProblemDetail` 风格。
+- 所有 `/api/v1/**` 的 JSON 成功和错误响应必须使用 `com.metatwinwear.common.response.ApiResponse<T>`，字段固定为 `code`、`message`、`success`、`data`；`code` 必须与 HTTP 状态码一致，失败时 `data` 为 `null`。业务结果放在 `data` 中，不返回裸业务 JSON，也不另建响应包装格式。
+- 成功响应使用 `ApiResponse.success(...)`，失败响应使用 `ApiResponse.failure(ApiStatus, ...)`；状态码和默认消息统一维护在 `ApiStatus`，未知状态码应明确报错。请求参数、业务校验及异常由统一异常处理链生成安全且明确的失败消息；未知异常不得向客户端暴露堆栈或内部实现细节。
+- 图片成功响应保持 `image/jpeg` 二进制格式，图片错误使用统一 JSON 响应；SSE HTTP 流保持 `text/event-stream`，`snapshot` 和 `heartbeat` 事件数据使用 `ApiResponse` JSON 包装。Actuator、Eureka 等基础设施端点不属于该包装范围。
+- 接口变更同步更新 `backend/openapi.yaml`，保持 `/api/v1/**` 网关路由，并核对网关和业务服务的成功、错误响应均符合上述格式。
 - 请求结构在入口使用 Bean Validation 等机制校验，涉及业务状态的约束由 Service 校验；错误信息应明确且不泄露内部实现细节。
 - 数据库结构变更通过 `monitoring-service/src/main/resources/db/migration/` 下新的 Flyway 版本化脚本实施，不修改已经应用的迁移脚本。
 - 当前业务数据使用 SQLite。遵守 `DATA_MIGRATION.md` 中的字段、ID、时间戳及关系约定；同一数据库文件只由一个业务服务实例写入。

@@ -1,7 +1,6 @@
 package com.metatwinwear.monitoring.service;
 
 import com.metatwinwear.monitoring.model.dto.ApiModels.*;
-import com.metatwinwear.monitoring.config.ConfigurationCatalog;
 import com.metatwinwear.monitoring.mapper.*;
 import com.metatwinwear.monitoring.model.entity.*;
 import com.metatwinwear.monitoring.simulation.SampleGenerator;
@@ -18,7 +17,7 @@ public class MonitoringService {
     private final ConfigurationRevisionMapper configurations;
     private final MonitoringRunMapper runs;
     private final TelemetrySampleMapper samples;
-    private final ConfigurationCatalog catalog;
+    private final ToolCatalogService catalog;
     private final SampleGenerator generator;
     private final DashboardAssembler assembler;
     private final SseHub events;
@@ -26,7 +25,7 @@ public class MonitoringService {
     private volatile boolean ready;
 
     public MonitoringService(ConfigurationRevisionMapper configurations, MonitoringRunMapper runs,
-                             TelemetrySampleMapper samples, ConfigurationCatalog catalog, SampleGenerator generator,
+                             TelemetrySampleMapper samples, ToolCatalogService catalog, SampleGenerator generator,
                              DashboardAssembler assembler, SseHub events, TransactionTemplate transactions) {
         this.configurations = configurations;
         this.runs = runs;
@@ -43,6 +42,9 @@ public class MonitoringService {
             transactions.executeWithoutResult(status -> {
                 ConfigurationRevision config = configurations.latest();
                 if (config == null) config = insertConfiguration(catalog.defaults(), 1);
+                else if (!catalog.options().toolModels().contains(config.model)) {
+                    config = insertConfiguration(catalog.defaults(), config.version + 1);
+                }
                 MonitoringRun run = runs.latest();
                 if (run == null) {
                     insertSeededRun(config);

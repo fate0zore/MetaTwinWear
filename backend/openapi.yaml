@@ -2,11 +2,50 @@ openapi: 3.0.3
 info:
   title: MetaTwinWear Monitoring API
   version: 1.0.0
-  description: 单实例演示设备；无登录，所有访问者共享监听与配置状态。
+  description: 单实例演示设备；业务 JSON 接口统一返回 code/message/success/data，code 与 HTTP 状态码一致；SSE 事件数据使用同一结构，图片成功响应为 JPEG。
 servers:
   - url: http://localhost:8080
     description: Spring Cloud Gateway
 paths:
+  /api/v1/tools:
+    get:
+      summary: 刀具目录
+      description: 返回从本地刀具参数表导入的规格、产品描述及预览图片地址。
+      responses:
+        '200':
+          description: 13 条刀具目录记录
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseToolCatalog'
+        default:
+          $ref: '#/components/responses/ApiError'
+  /api/v1/tools/{model}/image:
+    get:
+      summary: 刀具预览图片
+      parameters:
+        - name: model
+          in: path
+          required: true
+          description: 刀具型号；路径段按 UTF-8 百分号编码。
+          schema:
+            type: string
+      responses:
+        '200':
+          description: JPEG 刀具主图
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: 刀具型号或图片不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        default:
+          $ref: '#/components/responses/ApiError'
   /api/v1/monitoring/snapshot:
     get:
       summary: 当前监控快照
@@ -16,18 +55,22 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DashboardSnapshot'
+                $ref: '#/components/schemas/ApiResponseSnapshot'
+        default:
+          $ref: '#/components/responses/ApiError'
   /api/v1/monitoring/events:
     get:
       summary: 监控事件流
-      description: 建立及重连时发送 snapshot 事件，监听期间约每秒更新；事件 id 为运行 ID 与采样序号。
+      description: 建立及重连时发送 snapshot 事件，监听期间发送 heartbeat；两种事件的 data 均为 ApiResponse JSON。
       responses:
         '200':
-          description: Server Sent Events，event 为 snapshot，data 为 DashboardSnapshot JSON
+          description: Server Sent Events，snapshot 的 data 为 ApiResponseSnapshot，heartbeat 的 data 为 ApiResponseHeartbeat
           content:
             text/event-stream:
               schema:
                 type: string
+        default:
+          $ref: '#/components/responses/ApiError'
   /api/v1/monitoring/start:
     post:
       summary: 幂等开始监听
@@ -37,7 +80,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DashboardSnapshot'
+                $ref: '#/components/schemas/ApiResponseSnapshot'
+        default:
+          $ref: '#/components/responses/ApiError'
   /api/v1/monitoring/stop:
     post:
       summary: 幂等停止监听
@@ -47,7 +92,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DashboardSnapshot'
+                $ref: '#/components/schemas/ApiResponseSnapshot'
+        default:
+          $ref: '#/components/responses/ApiError'
   /api/v1/monitoring/reset:
     post:
       summary: 停止监听、恢复默认配置、创建新运行并重建窗口
@@ -57,7 +104,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DashboardSnapshot'
+                $ref: '#/components/schemas/ApiResponseSnapshot'
+        default:
+          $ref: '#/components/responses/ApiError'
   /api/v1/configuration:
     get:
       summary: 获取刀具及工件配置
@@ -67,7 +116,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Configuration'
+                $ref: '#/components/schemas/ApiResponseConfiguration'
+        default:
+          $ref: '#/components/responses/ApiError'
     put:
       summary: 整体更新刀具及工件配置
       requestBody:
@@ -82,9 +133,15 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Configuration'
+                $ref: '#/components/schemas/ApiResponseConfiguration'
         '400':
           description: 配置不合法或不在可选范围
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        default:
+          $ref: '#/components/responses/ApiError'
   /api/v1/configuration/options:
     get:
       summary: 表单选项
@@ -94,18 +151,94 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  toolModels: { type: array, items: { type: string } }
-                  toolTypes: { type: array, items: { type: string } }
-                  diameters: { type: array, items: { type: integer } }
-                  lengths: { type: array, items: { type: integer } }
-                  toothCounts: { type: array, items: { type: integer } }
-                  materials: { type: array, items: { type: string } }
-                  workpieceSizes: { type: array, items: { type: string } }
-                  workpieceMaterials: { type: array, items: { type: string } }
+                $ref: '#/components/schemas/ApiResponseOptions'
+        default:
+          $ref: '#/components/responses/ApiError'
 components:
+  responses:
+    ApiError:
+      description: 统一错误响应
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
   schemas:
+    ApiResponseBase:
+      type: object
+      required: [code, message, success]
+      properties:
+        code: { type: integer, description: 与 HTTP 状态码一致 }
+        message: { type: string }
+        success: { type: boolean }
+    ApiErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required: [data]
+          properties:
+            data: { type: object, nullable: true, description: 失败时固定为 null }
+      example: { code: 400, message: "请求参数校验失败", success: false, data: null }
+    ApiResponseToolCatalog:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required: [data]
+          properties:
+            data:
+              type: array
+              items: { $ref: '#/components/schemas/ToolCatalogItem' }
+    ApiResponseOptions:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required: [data]
+          properties:
+            data: { $ref: '#/components/schemas/ConfigurationOptions' }
+    ApiResponseConfiguration:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required: [data]
+          properties:
+            data: { $ref: '#/components/schemas/Configuration' }
+    ApiResponseSnapshot:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required: [data]
+          properties:
+            data: { $ref: '#/components/schemas/DashboardSnapshot' }
+    ApiResponseHeartbeat:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required: [data]
+          properties:
+            data: { type: string, example: ok }
+    ConfigurationOptions:
+      type: object
+      required: [toolModels, toolTypes, diameters, lengths, toothCounts, materials, workpieceSizes, workpieceMaterials]
+      properties:
+        toolModels: { type: array, items: { type: string } }
+        toolTypes: { type: array, items: { type: string } }
+        diameters: { type: array, items: { type: integer } }
+        lengths: { type: array, items: { type: integer } }
+        toothCounts: { type: array, items: { type: integer } }
+        materials: { type: array, items: { type: string } }
+        workpieceSizes: { type: array, items: { type: string } }
+        workpieceMaterials: { type: array, items: { type: string } }
+    ToolCatalogItem:
+      type: object
+      required: [model, type, diameter, length, toothCount, material, description, imageUrl]
+      properties:
+        model: { type: string }
+        type: { type: string }
+        diameter: { type: number }
+        length: { type: number }
+        toothCount: { type: integer }
+        material: { type: string }
+        description: { type: string }
+        imageUrl: { type: string, format: uri-reference }
     Configuration:
       type: object
       required: [tool, workpiece]

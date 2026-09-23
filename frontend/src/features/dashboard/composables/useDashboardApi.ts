@@ -26,8 +26,13 @@ export function useDashboardApi() {
       }, 5000)
     }
     try {
-      const [snapshot, options] = await Promise.all([dashboardApi.snapshot(), dashboardApi.options()])
+      const [snapshot, options, tools] = await Promise.all([
+        dashboardApi.snapshot(),
+        dashboardApi.options(),
+        dashboardApi.tools(),
+      ])
       store.applyOptions(options)
+      store.applyToolCatalog(tools)
       store.applySnapshot(snapshot)
       source?.close()
       lastContact = Date.now()
@@ -40,6 +45,10 @@ export function useDashboardApi() {
           if (connected) lastContact = Date.now()
           store.apiConnection = connected ? 'connected' : 'disconnected'
           store.apiError = connected ? '' : '与后端连接中断，正在重连…'
+        },
+        (message) => {
+          store.apiError = message
+          store.apiConnection = 'disconnected'
         },
       )
     } catch (error) {

@@ -1,5 +1,6 @@
 package com.metatwinwear.monitoring.controller;
 
+import com.metatwinwear.common.response.ApiResponse;
 import com.metatwinwear.monitoring.model.dto.ApiModels.DashboardSnapshot;
 import com.metatwinwear.monitoring.service.MonitoringService;
 import com.metatwinwear.monitoring.service.SseHub;
@@ -22,27 +23,32 @@ public class MonitoringController {
     }
 
     @GetMapping("/snapshot")
-    public DashboardSnapshot snapshot() {
-        return monitoring.snapshot();
+    /** Returns the current monitoring snapshot. */
+    public ApiResponse<DashboardSnapshot> snapshot() {
+        return ApiResponse.success(monitoring.snapshot());
     }
 
     @GetMapping(path = "/events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    /** Opens a stream of wrapped snapshots and heartbeat events. */
     public SseEmitter events() {
         return events.subscribe(monitoring.snapshot());
     }
 
     @PostMapping("/start")
-    public DashboardSnapshot start() {
-        return monitoring.start();
+    /** Starts monitoring and returns the resulting snapshot. */
+    public ApiResponse<DashboardSnapshot> start() {
+        return ApiResponse.success("监控已启动", monitoring.start());
     }
 
     @PostMapping("/stop")
-    public DashboardSnapshot stop() {
-        return monitoring.stop();
+    /** Stops monitoring and returns the resulting snapshot. */
+    public ApiResponse<DashboardSnapshot> stop() {
+        return ApiResponse.success("监控已停止", monitoring.stop());
     }
 
     @PostMapping("/reset")
-    public DashboardSnapshot reset() {
-        return monitoring.reset();
+    /** Resets monitoring state and returns the new snapshot. */
+    public ApiResponse<DashboardSnapshot> reset() {
+        return ApiResponse.success("监控数据已重置", monitoring.reset());
     }
 }

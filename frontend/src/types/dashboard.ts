@@ -9,6 +9,11 @@ export interface ToolConfig {
   material: string
 }
 
+export interface ToolCatalogItem extends ToolConfig {
+  description: string
+  imageUrl: string
+}
+
 export interface ProcessParams {
   spindleSpeed: number
   feedRate: number
@@ -91,6 +96,7 @@ export interface DashboardState {
   apiReady: boolean
   sampledAt: string | null
   configSaving: boolean
+  toolCatalog: ToolCatalogItem[]
   configOptions: ConfigurationOptions
   serverRecommendations: ApiRecommendation[]
   activeAlert: ActiveAlert | null
@@ -142,4 +148,11 @@ export interface ApiSnapshot {
   processHistory: ProcessSample[]
   recommendations: ApiRecommendation[]
   activeAlert: ActiveAlert | null
+}
+
+export interface ApiResponse<T> {
+  code: number
+  message: string
+  success: boolean
+  data: T | null
 }

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 
 import { cloneDashboardState } from '@/mock/dashboard'
-import type { ApiSnapshot, ConfigurationOptions, DashboardState, ProcessSample, SensorSeries, SignalChannel, TimePoint } from '@/types/dashboard'
+import type { ApiSnapshot, ConfigurationOptions, DashboardState, ProcessSample, SensorSeries, SignalChannel, TimePoint, ToolCatalogItem } from '@/types/dashboard'
 
 const nextPoint = (lastValue: number, index: number, drift = 0, amplitude = 1): number =>
   Number((lastValue + Math.sin(index * 1.27) * amplitude * 0.48 + (Math.random() - 0.5) * amplitude + drift).toFixed(2))
@@ -65,6 +65,22 @@ export const useDashboardStore = defineStore('dashboard', {
     },
     applyOptions(options: ConfigurationOptions) {
       this.configOptions = options
+    },
+    applyToolCatalog(items: ToolCatalogItem[]) {
+      this.toolCatalog = items
+    },
+    selectTool(model: string) {
+      const item = this.toolCatalog.find((tool) => tool.model === model)
+      if (!item) return false
+      this.tool = {
+        model: item.model,
+        type: item.type,
+        diameter: item.diameter,
+        length: item.length,
+        toothCount: item.toothCount,
+        material: item.material,
+      }
+      return true
     },
     dismissAlert() {
       this.dismissedAlertId = this.activeAlert?.id ?? null

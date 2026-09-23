@@ -1,5 +1,6 @@
 package com.metatwinwear.monitoring.service;
 
+import com.metatwinwear.common.response.ApiResponse;
 import com.metatwinwear.monitoring.model.dto.ApiModels.DashboardSnapshot;
 import java.io.IOException;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -40,7 +41,8 @@ public class SseHub {
     public void heartbeat() {
         for (SseEmitter emitter : clients) {
             try {
-                emitter.send(SseEmitter.event().name("heartbeat").data("ok"));
+                emitter.send(SseEmitter.event().name("heartbeat")
+                        .data(ApiResponse.success("连接正常", "ok")));
             } catch (IOException | IllegalStateException error) {
                 clients.remove(emitter);
                 emitter.complete();
@@ -50,6 +52,6 @@ public class SseHub {
 
     private void send(SseEmitter emitter, DashboardSnapshot snapshot) throws IOException {
         emitter.send(SseEmitter.event().name("snapshot")
-                .id(snapshot.runId() + ":" + snapshot.sequence()).data(snapshot));
+                .id(snapshot.runId() + ":" + snapshot.sequence()).data(ApiResponse.success(snapshot)));
     }
 }

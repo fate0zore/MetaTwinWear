@@ -83,6 +83,14 @@ src/
 - Mock 数据与真实 API 使用共享类型，保证数据源可以逐步替换。
 - 数据模块应明确处理 loading、error、empty 和 success 状态；不能静默吞掉关键请求失败。
 
+### HTTP API 响应约定
+
+- `/api/v1/**` 的 JSON API 使用 `ApiResponse<T>` 统一结构：`code`、`message`、`success`、`data`；HTTP 状态码与 `code` 一致。`data` 才是业务对象，前端 API 边界应在成功时解包并向 Store、composable 和组件提供业务数据，不让页面依赖响应信封。
+- 请求失败或响应 `success: false` 时优先使用后端 `message` 展示错误；不得把失败响应当作成功业务数据，也不得静默忽略解析错误。
+- SSE 的 `snapshot`、`heartbeat` 事件数据同样是 `ApiResponse<T>`，解析后再更新状态；错误或无效事件应转换为可见的连接错误状态。
+- 图片成功响应为原始 `image/jpeg`，通过图片 URL 加载，不按 JSON 响应解析；图片加载失败应显示适当的错误状态。
+- 上述信封约定只适用于真实 API；Mock 数据继续使用共享的业务数据类型，不额外包一层 `ApiResponse`。
+
 ### 应该
 
 - 将数据获取、转换、轮询和副作用放在 composable、store 或数据访问边界内，不放入纯展示组件。

@@ -5,3 +5,7 @@ tasks.named('bootJar') {
 tasks.named('jar') {
     enabled = true
 }
+
+dependencies {
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}

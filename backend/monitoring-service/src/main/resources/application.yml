@@ -13,6 +13,10 @@ spring:
   flyway:
     locations: classpath:db/migration
 
+metatwinwear:
+  tool-catalog:
+    image-root: ${METATWINWEAR_TOOL_IMAGE_ROOT:}
+
 eureka:
   client:
     service-url:
