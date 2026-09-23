@@ -1,22 +1,38 @@
 <template>
   <DashboardPanel class="digital-twin-panel" title="刀具当前位置 · 实时数字孪生" :icon="Grid" :no-padding="true">
     <div class="twin-stage">
-      <div class="machine-background">
-        <div class="machine-grid"></div>
-        <div class="spindle-head"><span></span><i></i></div>
-        <div class="tool-shaft"><div class="cutter-flutes"></div></div>
-        <div class="workpiece"><div class="chip-stream"></div></div>
-        <div class="coolant-glow"></div>
+      <div class="twin-media">
+        <video
+          v-if="store.twinVideo.src"
+          :key="store.twinVideo.src"
+          ref="videoRef"
+          class="twin-video"
+          :src="store.twinVideo.src"
+          aria-label="数控铣床切削加工视频"
+          autoplay
+          muted
+          loop
+          playsinline
+          preload="metadata"
+          @loadeddata="videoState = 'ready'"
+          @playing="videoState = 'playing'"
+          @pause="videoState = 'paused'"
+          @waiting="videoState = 'waiting'"
+          @error="videoState = 'error'"
+        >浏览器不支持视频播放。</video>
+        <div v-if="!store.twinVideo.src || videoState === 'error'" class="twin-video-feedback" role="alert">
+          {{ store.twinVideo.src ? '视频加载失败，请检查视频源' : '暂无视频流' }}
+        </div>
+        <div class="twin-stream-label" role="status"><i></i>{{ store.twinVideo.label }} · {{ videoStatusText }}</div>
+        <button
+          v-if="store.twinVideo.src && videoState !== 'error'"
+          type="button"
+          class="twin-play-toggle"
+          :aria-label="videoState === 'playing' ? '暂停视频' : '播放视频'"
+          @click="togglePlayback"
+        >{{ videoState === 'playing' ? '暂停' : '播放' }}</button>
       </div>
-      <div class="axis-widget"><span class="axis-z">Z</span><span class="axis-y">Y</span><span class="axis-x">X</span><i class="axis-line z"></i><i class="axis-line y"></i><i class="axis-line x"></i></div>
       <div class="twin-badge speed-badge"><span>主轴转速:</span><strong>{{ store.process.spindleSpeed }} rpm</strong><span>进给速度: {{ store.process.feedRate }} mm/min</span></div>
-      <div class="twin-badge feed-badge"><span>进给方向</span><el-icon><ArrowRight /></el-icon></div>
-      <div class="rotation-label">刀具旋转 <span class="rotation-ring">↻</span></div>
-      <div class="tool-wear-inset">
-        <div class="inset-image reference-crop stage-accelerated" :style="referenceStyle"></div>
-        <span>后刀面磨损（放大）</span>
-        <div class="heat-scale"><i></i><i></i><i></i><i></i><small>0</small><small>0.1</small><small>0.2</small><small>0.3 mm</small></div>
-      </div>
       <div class="twin-status-card">
         <h4>刀具实时状态</h4>
         <p><span>刀具状态</span><strong class="status-tag">{{ store.wear.stage }}</strong></p>
@@ -33,12 +49,39 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { ArrowRight, Grid } from '@element-plus/icons-vue'
-import referenceDesign from '@/assets/dashboard/reference-design.png'
+import { computed, ref, watch } from 'vue'
+import { Grid } from '@element-plus/icons-vue'
 import DashboardPanel from './DashboardPanel.vue'
 import { useDashboardStore } from '@/stores/dashboard'
 
 const store = useDashboardStore()
-const referenceStyle = computed(() => ({ backgroundImage: `url(${referenceDesign})` }))
+const videoRef = ref<HTMLVideoElement | null>(null)
+const videoState = ref<'loading' | 'ready' | 'playing' | 'paused' | 'waiting' | 'error'>('loading')
+const videoStatusText = computed(() => {
+  if (!store.twinVideo.src) return '未连接'
+  return ({
+    loading: '加载中',
+    ready: '就绪',
+    playing: '播放中',
+    paused: '已暂停',
+    waiting: '缓冲中',
+    error: '加载失败',
+  })[videoState.value]
+})
+
+watch(() => store.twinVideo.src, () => { videoState.value = 'loading' })
+
+async function togglePlayback() {
+  const video = videoRef.value
+  if (!video) return
+  if (video.paused) {
+    try {
+      await video.play()
+    } catch {
+      videoState.value = 'paused'
+    }
+  } else {
+    video.pause()
+  }
+}
 </script>

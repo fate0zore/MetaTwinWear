@@ -1,4 +1,5 @@
 import type { DashboardState, ProcessSample, SensorSeries, SignalChannel, TimePoint } from '@/types/dashboard'
+import machiningVideo from '@/assets/dashboard/数控铣床用可转位刀具粗切削注射模镶件.mp4'
 
 const pointCount = 42
 
@@ -62,8 +63,12 @@ export const initialDashboardState: DashboardState = {
     stage: '稳定磨损',
     status: 'warning',
   },
+  twinVideo: {
+    src: machiningVideo,
+    label: '模拟视频流',
+  },
   monitoring: false,
-  alertVisible: true,
+  alertVisible: false,
   signals: [
     {
       id: 'vibration',

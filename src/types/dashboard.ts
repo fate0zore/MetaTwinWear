@@ -61,6 +61,11 @@ export interface WearState {
   status: WearStatus
 }
 
+export interface TwinVideoStream {
+  src: string
+  label: string
+}
+
 export interface Recommendation {
   icon: string
   label: string
@@ -73,6 +78,7 @@ export interface DashboardState {
   process: ProcessParams
   workpiece: WorkpieceConfig
   wear: WearState
+  twinVideo: TwinVideoStream
   monitoring: boolean
   alertVisible: boolean
   signals: SensorSeries[]

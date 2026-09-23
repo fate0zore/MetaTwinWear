@@ -23,5 +23,5 @@
 
 * { box-sizing: border-box; }
 html, body, #app { width: 100%; min-height: 100%; margin: 0; }
-body { min-height: 100vh; overflow-x: hidden; background: var(--bg-deep); }
+body { min-height: 100vh; min-height: 100dvh; overflow-x: hidden; background: var(--bg-deep); }
 button, input { font: inherit; }

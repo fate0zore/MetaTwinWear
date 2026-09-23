@@ -31,7 +31,7 @@
       <el-button type="primary" class="start-button" @click="emit('start')">
         <el-icon><VideoPlay /></el-icon>{{ store.monitoring ? '监听中' : '开始监听' }}
       </el-button>
-      <el-button class="reset-button" @click="emit('reset')"><el-icon><Refresh /></el-icon>重置 mock</el-button>
+      <el-button class="reset-button" @click="emit('reset')"><el-icon><Refresh /></el-icon>重置</el-button>
     </div>
 
     <slot name="process-replacement" />
