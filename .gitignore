@@ -2,3 +2,7 @@ node_modules/
 dist/
 .vite/
 *.tsbuildinfo
+backend/.gradle/
+backend/**/build/
+backend/**/bin/
+backend/data/*.sqlite*

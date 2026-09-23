@@ -1,0 +1,9 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+rootProject.name = 'metatwinwear-backend'
+include 'discovery-server', 'api-gateway', 'monitoring-service'

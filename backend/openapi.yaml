@@ -1,0 +1,209 @@
+openapi: 3.0.3
+info:
+  title: MetaTwinWear Monitoring API
+  version: 1.0.0
+  description: 单实例演示设备；无登录，所有访问者共享监听与配置状态。
+servers:
+  - url: http://localhost:8080
+    description: Spring Cloud Gateway
+paths:
+  /api/v1/monitoring/snapshot:
+    get:
+      summary: 当前监控快照
+      responses:
+        '200':
+          description: 当前运行及最近 42 个采样
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSnapshot'
+  /api/v1/monitoring/events:
+    get:
+      summary: 监控事件流
+      description: 建立及重连时发送 snapshot 事件，监听期间约每秒更新；事件 id 为运行 ID 与采样序号。
+      responses:
+        '200':
+          description: Server Sent Events，event 为 snapshot，data 为 DashboardSnapshot JSON
+          content:
+            text/event-stream:
+              schema:
+                type: string
+  /api/v1/monitoring/start:
+    post:
+      summary: 幂等开始监听
+      responses:
+        '200':
+          description: 最新快照
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSnapshot'
+  /api/v1/monitoring/stop:
+    post:
+      summary: 幂等停止监听
+      responses:
+        '200':
+          description: 最新快照
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSnapshot'
+  /api/v1/monitoring/reset:
+    post:
+      summary: 停止监听、恢复默认配置、创建新运行并重建窗口
+      responses:
+        '200':
+          description: 新运行快照；旧运行及采样保留
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSnapshot'
+  /api/v1/configuration:
+    get:
+      summary: 获取刀具及工件配置
+      responses:
+        '200':
+          description: 当前配置
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Configuration'
+    put:
+      summary: 整体更新刀具及工件配置
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Configuration'
+      responses:
+        '200':
+          description: 已保存的配置
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Configuration'
+        '400':
+          description: 配置不合法或不在可选范围
+  /api/v1/configuration/options:
+    get:
+      summary: 表单选项
+      responses:
+        '200':
+          description: 刀具与工件选项
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  toolModels: { type: array, items: { type: string } }
+                  toolTypes: { type: array, items: { type: string } }
+                  diameters: { type: array, items: { type: integer } }
+                  lengths: { type: array, items: { type: integer } }
+                  toothCounts: { type: array, items: { type: integer } }
+                  materials: { type: array, items: { type: string } }
+                  workpieceSizes: { type: array, items: { type: string } }
+                  workpieceMaterials: { type: array, items: { type: string } }
+components:
+  schemas:
+    Configuration:
+      type: object
+      required: [tool, workpiece]
+      properties:
+        tool:
+          type: object
+          required: [model, type, diameter, length, toothCount, material]
+          properties:
+            model: { type: string }
+            type: { type: string }
+            diameter: { type: number, exclusiveMinimum: 0 }
+            length: { type: number, exclusiveMinimum: 0 }
+            toothCount: { type: integer, minimum: 1 }
+            material: { type: string }
+        workpiece:
+          type: object
+          required: [size, material]
+          properties:
+            size: { type: string }
+            material: { type: string }
+    TimePoint:
+      type: object
+      properties:
+        time: { type: string, description: '运行内相对时间 mm:ss' }
+        value: { type: number }
+    DashboardSnapshot:
+      type: object
+      required: [runId, sequence, monitoring, sampledAt, tool, workpiece, process, wear, signals, wearHistory, predictionHistory, processHistory, recommendations]
+      properties:
+        runId: { type: string, format: uuid }
+        sequence: { type: integer, format: int64 }
+        monitoring: { type: boolean }
+        sampledAt: { type: string, format: date-time }
+        tool: { $ref: '#/components/schemas/Configuration/properties/tool' }
+        workpiece: { $ref: '#/components/schemas/Configuration/properties/workpiece' }
+        process:
+          type: object
+          properties:
+            spindleSpeed: { type: integer }
+            feedRate: { type: integer }
+            cuttingDepth: { type: number }
+            cuttingWidth: { type: number }
+            coolant: { type: string }
+        wear:
+          type: object
+          properties:
+            currentWear: { type: number }
+            threshold: { type: number }
+            wearRate: { type: number }
+            remainingLife: { type: number }
+            stage: { type: string }
+            status: { type: string, enum: [normal, warning, danger] }
+        signals:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              title: { type: string }
+              unit: { type: string }
+              current: { type: number }
+              peak: { type: number }
+              data: { type: array, items: { $ref: '#/components/schemas/TimePoint' } }
+              channels:
+                type: array
+                nullable: true
+                items:
+                  type: object
+                  properties:
+                    name: { type: string }
+                    data: { type: array, items: { $ref: '#/components/schemas/TimePoint' } }
+        wearHistory: { type: array, items: { $ref: '#/components/schemas/TimePoint' } }
+        predictionHistory: { type: array, items: { $ref: '#/components/schemas/TimePoint' } }
+        processHistory:
+          type: array
+          items:
+            type: object
+            properties:
+              time: { type: string }
+              spindleSpeed: { type: integer }
+              feedRate: { type: integer }
+              cuttingDepth: { type: number }
+              cuttingWidth: { type: number }
+        recommendations:
+          type: array
+          items:
+            type: object
+            properties:
+              label: { type: string }
+              value: { type: string }
+              tone: { type: string, enum: [success, warning, danger, info] }
+        activeAlert:
+          nullable: true
+          type: object
+          properties:
+            id: { type: string, format: uuid }
+            createdAt: { type: string, format: date-time }
+            message: { type: string }
+            currentWear: { type: number }
+            threshold: { type: number }
+            remainingLife: { type: number }
