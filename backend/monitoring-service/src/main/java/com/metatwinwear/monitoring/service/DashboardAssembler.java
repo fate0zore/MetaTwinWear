@@ -1,9 +1,9 @@
-package com.metatwinwear.monitoring.monitoring;
+package com.metatwinwear.monitoring.service;
 
-import com.metatwinwear.monitoring.api.ApiModels.*;
-import com.metatwinwear.monitoring.persistence.ConfigurationRevision;
-import com.metatwinwear.monitoring.persistence.MonitoringRun;
-import com.metatwinwear.monitoring.persistence.TelemetrySample;
+import com.metatwinwear.monitoring.model.dto.ApiModels.*;
+import com.metatwinwear.monitoring.model.entity.ConfigurationRevision;
+import com.metatwinwear.monitoring.model.entity.MonitoringRun;
+import com.metatwinwear.monitoring.model.entity.TelemetrySample;
 import com.metatwinwear.monitoring.simulation.SampleGenerator;
 import java.time.Instant;
 import java.util.List;

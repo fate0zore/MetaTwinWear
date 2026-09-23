@@ -1,6 +1,6 @@
 package com.metatwinwear.monitoring.simulation;
 
-import com.metatwinwear.monitoring.persistence.TelemetrySample;
+import com.metatwinwear.monitoring.model.entity.TelemetrySample;
 import java.util.Random;
 import java.util.UUID;
 import org.springframework.stereotype.Component;

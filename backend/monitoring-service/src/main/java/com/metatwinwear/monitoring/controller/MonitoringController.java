@@ -1,8 +1,8 @@
-package com.metatwinwear.monitoring.api;
+package com.metatwinwear.monitoring.controller;
 
-import com.metatwinwear.monitoring.api.ApiModels.DashboardSnapshot;
-import com.metatwinwear.monitoring.monitoring.MonitoringService;
-import com.metatwinwear.monitoring.monitoring.SseHub;
+import com.metatwinwear.monitoring.model.dto.ApiModels.DashboardSnapshot;
+import com.metatwinwear.monitoring.service.MonitoringService;
+import com.metatwinwear.monitoring.service.SseHub;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;

@@ -1,4 +1,4 @@
-package com.metatwinwear.monitoring.api;
+package com.metatwinwear.monitoring.model.dto;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;

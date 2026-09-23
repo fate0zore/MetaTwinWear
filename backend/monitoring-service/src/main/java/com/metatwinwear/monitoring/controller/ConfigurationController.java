@@ -1,8 +1,8 @@
-package com.metatwinwear.monitoring.api;
+package com.metatwinwear.monitoring.controller;
 
-import com.metatwinwear.monitoring.api.ApiModels.ConfigurationOptions;
-import com.metatwinwear.monitoring.api.ApiModels.ConfigurationPayload;
-import com.metatwinwear.monitoring.monitoring.MonitoringService;
+import com.metatwinwear.monitoring.model.dto.ApiModels.ConfigurationOptions;
+import com.metatwinwear.monitoring.model.dto.ApiModels.ConfigurationPayload;
+import com.metatwinwear.monitoring.service.MonitoringService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;

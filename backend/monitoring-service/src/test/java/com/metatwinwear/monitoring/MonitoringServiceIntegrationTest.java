@@ -2,13 +2,13 @@ package com.metatwinwear.monitoring;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.metatwinwear.monitoring.api.ApiModels.ConfigurationPayload;
-import com.metatwinwear.monitoring.api.ApiModels.DashboardSnapshot;
-import com.metatwinwear.monitoring.api.ApiModels.ToolConfig;
-import com.metatwinwear.monitoring.monitoring.MonitoringService;
-import com.metatwinwear.monitoring.persistence.ConfigurationRevisionMapper;
-import com.metatwinwear.monitoring.persistence.MonitoringRunMapper;
-import com.metatwinwear.monitoring.persistence.TelemetrySampleMapper;
+import com.metatwinwear.monitoring.model.dto.ApiModels.ConfigurationPayload;
+import com.metatwinwear.monitoring.model.dto.ApiModels.DashboardSnapshot;
+import com.metatwinwear.monitoring.model.dto.ApiModels.ToolConfig;
+import com.metatwinwear.monitoring.mapper.ConfigurationRevisionMapper;
+import com.metatwinwear.monitoring.mapper.MonitoringRunMapper;
+import com.metatwinwear.monitoring.mapper.TelemetrySampleMapper;
+import com.metatwinwear.monitoring.service.MonitoringService;
 import java.nio.file.Path;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;

@@ -6,4 +6,4 @@ pluginManagement {
 }
 
 rootProject.name = 'metatwinwear-backend'
-include 'discovery-server', 'api-gateway', 'monitoring-service'
+include 'common', 'discovery-server', 'api-gateway', 'monitoring-service'

@@ -1,5 +1,6 @@
-package com.metatwinwear.monitoring.monitoring;
+package com.metatwinwear.monitoring.scheduler;
 
+import com.metatwinwear.monitoring.service.MonitoringService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 

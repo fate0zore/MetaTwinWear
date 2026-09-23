@@ -5,6 +5,7 @@ Vue 3 前端与 Java 17 / Spring Cloud 后端位于同一仓库。首期后端�
 ## 目录
 
 - `frontend/`：Vue 3、Vite、Pinia 前端及演示视频、图片。
+- `backend/common/`：后端服务共用的 Java 类型、配置、业务能力和资源库。
 - `backend/discovery-server/`：Eureka 注册中心，端口 `8761`。
 - `backend/api-gateway/`：网关，端口 `8080`，显式转发 `/api/v1/**`。
 - `backend/monitoring-service/`：业务服务，端口 `8081`，含监控、配置与预测逻辑。

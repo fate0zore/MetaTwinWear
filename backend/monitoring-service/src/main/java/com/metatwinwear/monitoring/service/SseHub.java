@@ -1,6 +1,6 @@
-package com.metatwinwear.monitoring.monitoring;
+package com.metatwinwear.monitoring.service;
 
-import com.metatwinwear.monitoring.api.ApiModels.DashboardSnapshot;
+import com.metatwinwear.monitoring.model.dto.ApiModels.DashboardSnapshot;
 import java.io.IOException;
 import java.util.concurrent.CopyOnWriteArrayList;
 import org.springframework.scheduling.annotation.Scheduled;

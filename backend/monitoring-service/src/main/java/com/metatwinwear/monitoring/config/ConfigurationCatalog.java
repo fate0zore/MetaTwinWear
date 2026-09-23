@@ -1,9 +1,9 @@
 package com.metatwinwear.monitoring.config;
 
-import com.metatwinwear.monitoring.api.ApiModels.ConfigurationOptions;
-import com.metatwinwear.monitoring.api.ApiModels.ConfigurationPayload;
-import com.metatwinwear.monitoring.api.ApiModels.ToolConfig;
-import com.metatwinwear.monitoring.api.ApiModels.WorkpieceConfig;
+import com.metatwinwear.monitoring.model.dto.ApiModels.ConfigurationOptions;
+import com.metatwinwear.monitoring.model.dto.ApiModels.ConfigurationPayload;
+import com.metatwinwear.monitoring.model.dto.ApiModels.ToolConfig;
+import com.metatwinwear.monitoring.model.dto.ApiModels.WorkpieceConfig;
 import java.util.List;
 import org.springframework.stereotype.Component;
 

@@ -1,15 +1,14 @@
-package com.metatwinwear.monitoring.monitoring;
+package com.metatwinwear.monitoring.service;
 
-import com.metatwinwear.monitoring.api.ApiModels.*;
+import com.metatwinwear.monitoring.model.dto.ApiModels.*;
 import com.metatwinwear.monitoring.config.ConfigurationCatalog;
-import com.metatwinwear.monitoring.persistence.*;
+import com.metatwinwear.monitoring.mapper.*;
+import com.metatwinwear.monitoring.model.entity.*;
 import com.metatwinwear.monitoring.simulation.SampleGenerator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import org.springframework.boot.ApplicationRunner;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -37,11 +36,6 @@ public class MonitoringService {
         this.assembler = assembler;
         this.events = events;
         this.transactions = transactions;
-    }
-
-    @Bean
-    ApplicationRunner initializeMonitoring() {
-        return args -> initialize();
     }
 
     public void initialize() {

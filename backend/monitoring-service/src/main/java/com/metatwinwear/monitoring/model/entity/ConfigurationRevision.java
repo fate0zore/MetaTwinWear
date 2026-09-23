@@ -1,4 +1,4 @@
-package com.metatwinwear.monitoring.persistence;
+package com.metatwinwear.monitoring.model.entity;
 
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
