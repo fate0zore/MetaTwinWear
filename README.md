@@ -14,37 +14,44 @@ Vue 3 前端与 Java 17 / Spring Cloud 后端位于同一仓库。首期后端�
 
 ## 前端
 
-从仓库根目录安装依赖：
+在仓库根目录运行前端命令。首次启动时，脚本会检查前端依赖；若 `frontend/node_modules` 不存在，会自动执行 `npm --prefix frontend ci`。也可以手动提前安装：
 
 ```sh
 npm --prefix frontend ci
 ```
 
-默认使用独立的本地 Mock，无需启动后端：
+### Mock 模式
+
+只启动前端，数据完全由本地 Mock 生成，不依赖后端：
 
 ```sh
-npm run dev
+npm run dev:mock
 ```
 
-构建及预览：
+`npm run dev` 也是 Mock 模式的快捷入口。
+
+### 前后端联调模式
+
+在仓库根目录运行：
+
+```sh
+npm run dev:integration
+```
+
+脚本依次启动 Eureka（`8761`）、监控业务服务（`8081`）、Gateway（`8080`）和 API 模式前端（`5173`），每个服务就绪后再启动下一个。运行期间保持这个终端打开，按 `Ctrl+C` 会停止本次启动的服务。若所需端口已被占用，脚本会提示并退出。首次启动后端需要网络下载 Gradle 和 Maven 依赖。
+
+前端开发服务器把 `/api` 代理至 `http://localhost:8080`。API 模式断线时显示连接状态并自动重连 SSE；不切回 Mock。生产部署需要让前端同源 `/api` 路径指向网关。视频、图片及图标仍由前端静态资源提供。
+
+### 构建及预览
 
 ```sh
 npm run build
 npm run preview
 ```
 
-API 模式需要先启动以下三个后端进程，再为前端设置 `VITE_DATA_SOURCE=api`。PowerShell 示例：
-
-```powershell
-$env:VITE_DATA_SOURCE = 'api'
-npm run dev
-```
-
-前端开发服务器把 `/api` 代理至 `http://localhost:8080`。API 模式断线时显示连接状态并自动重连 SSE；不切回 Mock。生产部署需要让前端同源 `/api` 路径指向网关。视频、图片及图标仍由前端静态资源提供。
-
 ## 后端
 
-需要 Java 17。Gradle 8.14.5 已随 `backend/gradlew` 和 `backend/gradlew.bat` 固定，无需单独安装。从 `backend/` 执行以下命令，分别在三个终端中按顺序启动：
+需要 Java 17。Gradle 8.14.5 已随 `backend/gradlew` 和 `backend/gradlew.bat` 固定，无需单独安装。手动启动时，从 `backend/` 执行以下命令，分别在三个终端中按顺序启动：
 
 ```powershell
 cd backend
@@ -61,7 +68,7 @@ cd backend
 .\gradlew.bat :api-gateway:bootRun
 ```
 
-Linux/macOS 使用 `./gradlew`。首次启动业务服务时 Flyway 创建表并生成默认配置、停止状态的运行与 42 个示例采样。后续启动会恢复配置和历史采样，监听状态置为停止。默认数据库文件为 `backend/data/metatwinwear.sqlite`；可设置 `METATWINWEAR_DB_PATH` 为另一个 SQLite 文件路径，父目录需事先存在。一个数据库只应由一个业务服务实例写入。
+Linux/macOS 将上面的 `.\gradlew.bat` 换成 `bash ./gradlew`。首次启动业务服务时 Flyway 创建表并生成默认配置、停止状态的运行与 42 个示例采样。后续启动会恢复配置和历史采样，监听状态置为停止。默认数据库文件为 `backend/data/metatwinwear.sqlite`；可设置 `METATWINWEAR_DB_PATH` 为另一个 SQLite 文件路径，父目录需事先存在。一个数据库只应由一个业务服务实例写入。
 
 执行全部后端构建与测试：
 
