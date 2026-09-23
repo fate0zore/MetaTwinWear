@@ -15,14 +15,17 @@ import { computed } from 'vue'
 import { Aim, Clock, List, Odometer, WarningFilled } from '@element-plus/icons-vue'
 import DashboardPanel from './DashboardPanel.vue'
 import { useDashboardStore } from '@/stores/dashboard'
+import { classifyWearStage } from '@/features/dashboard/wearStages'
 
 const store = useDashboardStore()
+const currentWearStage = computed(() => classifyWearStage(store.wear.currentWear, store.wear.threshold))
+const riskTone = computed(() => store.wear.status === 'danger' ? 'danger' : store.wear.status === 'warning' ? 'warning' : 'success')
 const mockRecommendations = computed(() => [
-  { icon: store.wear.status === 'danger' ? WarningFilled : Aim, label: '当前状态', value: store.wear.stage, tone: store.wear.status === 'danger' ? 'danger' : 'warning' },
-  { icon: WarningFilled, label: '风险等级', value: store.wear.status === 'danger' ? '高' : '较高', tone: 'danger' },
+  { icon: store.wear.status === 'danger' ? WarningFilled : Aim, label: '当前状态', value: currentWearStage.value.label, tone: currentWearStage.value.recommendationTone },
+  { icon: WarningFilled, label: '风险等级', value: store.wear.status === 'danger' ? '高' : store.wear.status === 'warning' ? '较高' : '低', tone: riskTone.value },
   { icon: Clock, label: '剩余寿命 RUL', value: `≤ ${Math.max(5, Math.ceil(store.wear.remainingLife))} min`, tone: 'info' },
   { icon: Odometer, label: '建议', value: '完成当前加工后更换刀具', tone: 'warning' },
-  { icon: Clock, label: '建议剩余加工时间', value: '≤ 5 min', tone: 'warning' },
+  { icon: Clock, label: '建议剩余加工时间', value: '≤ 5 min', tone: riskTone.value },
   { icon: Aim, label: '建议监测参数', value: '主轴振动、切削力', tone: 'info' },
 ])
 const recommendationIcons = [Aim, WarningFilled, Clock, Odometer, Clock, Aim]

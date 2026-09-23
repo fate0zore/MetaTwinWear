@@ -1,4 +1,7 @@
 export type WearStatus = 'normal' | 'warning' | 'danger'
+export type WearStage = '初始状态' | '轻微磨损' | '稳定磨损' | '加速磨损' | '临界状态'
+export type WearStageCode = 'initial' | 'light' | 'stable' | 'accelerated' | 'critical'
+export type RecommendationTone = 'success' | 'warning' | 'danger' | 'info' | `stage-${WearStageCode}`
 
 export interface ToolConfig {
   model: string
@@ -62,7 +65,7 @@ export interface WearState {
   threshold: number
   wearRate: number
   remainingLife: number
-  stage: string
+  stage: WearStage
   status: WearStatus
 }
 
@@ -75,7 +78,7 @@ export interface Recommendation {
   icon: string
   label: string
   value: string
-  tone: 'success' | 'warning' | 'danger' | 'info'
+  tone: RecommendationTone
 }
 
 export interface DashboardState {

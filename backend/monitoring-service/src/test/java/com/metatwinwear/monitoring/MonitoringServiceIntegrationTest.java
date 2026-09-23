@@ -10,6 +10,7 @@ import com.metatwinwear.monitoring.mapper.MonitoringRunMapper;
 import com.metatwinwear.monitoring.mapper.ToolCatalogMapper;
 import com.metatwinwear.monitoring.mapper.TelemetrySampleMapper;
 import com.metatwinwear.monitoring.model.entity.ConfigurationRevision;
+import com.metatwinwear.monitoring.model.entity.TelemetrySample;
 import com.metatwinwear.monitoring.model.entity.ToolCatalogRecord;
 import com.metatwinwear.monitoring.service.MonitoringService;
 import com.metatwinwear.monitoring.service.SseHub;
@@ -146,6 +147,24 @@ class MonitoringServiceIntegrationTest {
         assertTrue(eventBody.contains("\"code\":200"));
         assertTrue(eventBody.contains("\"data\":\"ok\""));
         assertTrue(eventBody.contains("\"runId\""));
+    }
+
+    @Test
+    void recalculatesLegacyWearStageInSnapshotResponse() throws Exception {
+        DashboardSnapshot reset = service.reset();
+        TelemetrySample legacySample = samples.recent(reset.runId(), 1).get(0);
+        legacySample.wearValue = 0.23;
+        legacySample.stage = "稳定磨损";
+        legacySample.status = "warning";
+        samples.updateById(legacySample);
+
+        mockMvc.perform(get("/api/v1/monitoring/snapshot"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.wear.currentWear").value(0.23))
+                .andExpect(jsonPath("$.data.wear.stage").value("加速磨损"))
+                .andExpect(jsonPath("$.data.wear.status").value("warning"))
+                .andExpect(jsonPath("$.data.recommendations[0].tone").value("stage-accelerated"))
+                .andExpect(jsonPath("$.data.recommendations[1].value").value("较高"));
     }
 
     @Test

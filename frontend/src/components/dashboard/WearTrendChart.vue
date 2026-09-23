@@ -21,7 +21,7 @@ const option = computed<EChartsOption>(() => ({
   yAxis: { type: 'value', min: 0, max: 0.5, axisLabel: { color: '#60859b', fontSize: 12 }, splitLine: { lineStyle: { color: 'rgba(43, 104, 137, .2)' } } },
   tooltip: { trigger: 'axis', backgroundColor: '#071b2b', borderColor: '#12648b', textStyle: { color: '#bfefff' } },
   series: [
-    { name: '实际磨损', type: 'line', data: store.wearHistory.map((item) => item.value), symbol: 'none', lineStyle: { color: '#1bbcff', width: 2 }, areaStyle: { color: 'rgba(27, 188, 255, .08)' }, markLine: { silent: true, symbol: 'none', lineStyle: { color: '#ff4f57', type: 'dashed' }, data: [{ yAxis: store.wear.threshold, label: { color: '#ff7373', formatter: '阈值 0.30 mm' } }] } },
+    { name: '实际磨损', type: 'line', data: store.wearHistory.map((item) => item.value), symbol: 'none', lineStyle: { color: '#1bbcff', width: 2 }, areaStyle: { color: 'rgba(27, 188, 255, .08)' }, markLine: { silent: true, symbol: 'none', lineStyle: { color: '#ff4f57', type: 'dashed' }, data: [{ yAxis: store.wear.threshold, label: { color: '#ff7373', formatter: `阈值 ${store.wear.threshold.toFixed(2)} mm` } }] } },
     { name: '预测曲线', type: 'line', data: store.predictionHistory.map((item) => item.value), symbol: 'none', lineStyle: { color: '#f5b946', type: 'dashed', width: 1.5 } },
   ],
 }))

@@ -45,7 +45,7 @@
         <PredictionChart />
         <div class="right-status-card">
           <div class="status-metrics"><div><span>当前磨损</span><strong>VB = {{ store.wear.currentWear.toFixed(2) }} mm</strong></div><div><span>磨损阈值</span><strong>VB = {{ store.wear.threshold.toFixed(2) }} mm</strong></div><div><span>预计剩余寿命</span><strong class="gold-text">{{ store.wear.remainingLife.toFixed(1) }} min</strong></div></div>
-          <div class="big-status"><span class="big-status-dot"></span><span>状态</span><strong>{{ store.wear.stage }}</strong></div>
+          <div class="big-status" :class="`wear-stage--${currentWearStage.code}`"><span class="big-status-dot"></span><span>状态</span><strong>{{ currentWearStage.label }}</strong></div>
         </div>
         <RecommendationList />
       </aside>
@@ -55,11 +55,12 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { DataLine, Grid, TrendCharts } from '@element-plus/icons-vue'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useDashboardMock } from '@/composables/useDashboardMock'
 import { useDashboardApi } from '@/features/dashboard/composables/useDashboardApi'
+import { classifyWearStage } from '@/features/dashboard/wearStages'
 import DashboardHeader from '@/components/dashboard/DashboardHeader.vue'
 import ConfigForm from '@/components/dashboard/ConfigForm.vue'
 import RealtimeSignalChart from '@/components/dashboard/RealtimeSignalChart.vue'
@@ -71,6 +72,7 @@ import RecommendationList from '@/components/dashboard/RecommendationList.vue'
 import AlertPanel from '@/components/dashboard/AlertPanel.vue'
 
 const store = useDashboardStore()
+const currentWearStage = computed(() => classifyWearStage(store.wear.currentWear, store.wear.threshold))
 const mock = useDashboardMock()
 const api = useDashboardApi()
 const connectApi = () => { if (store.dataSource === 'api') void api.connect() }
@@ -99,11 +101,10 @@ function updateTwinStageCap() {
   const center = centerColumnRef.value
   const twin = center?.querySelector<HTMLElement>('.digital-twin-panel')
   const twinHeading = twin?.querySelector<HTMLElement>('.panel-heading')
-  const timeline = twin?.querySelector<HTMLElement>('.wear-timeline')
-  if (!center || !twin || !twinHeading || !timeline) return
+  if (!center || !twin || !twinHeading) return
 
   const available = window.innerHeight - twin.getBoundingClientRect().top
-    - twinHeading.getBoundingClientRect().height - timeline.getBoundingClientRect().height - 8
+    - twinHeading.getBoundingClientRect().height - 8
   center.style.setProperty('--twin-stage-viewport-cap', `${Math.max(275, Math.floor(available))}px`)
 }
 
@@ -115,8 +116,7 @@ function updateAutomaticLayout() {
   const twin = center?.querySelector<HTMLElement>('.digital-twin-panel')
   const twinHeading = twin?.querySelector<HTMLElement>('.panel-heading')
   const stage = twin?.querySelector<HTMLElement>('.twin-stage')
-  const timeline = twin?.querySelector<HTMLElement>('.wear-timeline')
-  if (!center || !section || !heading || !grid || !twinHeading || !stage || !timeline) return
+  if (!center || !section || !heading || !grid || !twinHeading || !stage) return
 
   if (manualSignalChoice.value === null) {
     const columnGap = parseFloat(getComputedStyle(center).rowGap) || 0
@@ -127,7 +127,7 @@ function updateAutomaticLayout() {
     const requiredBottom = section.getBoundingClientRect().top
       + heading.getBoundingClientRect().height + gridMargin + grid.getBoundingClientRect().height
       + columnGap + twinHeading.getBoundingClientRect().height
-      + minimumStage + timeline.getBoundingClientRect().height + 8
+      + minimumStage + 8
     signalChartsExpanded.value = requiredBottom <= window.innerHeight
   }
   nextTick(updateTwinStageCap)
@@ -145,6 +145,7 @@ function toggleSignalCharts() {
 }
 
 onMounted(() => {
+  document.documentElement.classList.add('monitor-scrollbar-theme')
   connectApi()
   resizeObserver = new ResizeObserver(scheduleLayout)
   for (const element of [signalHeadingRef.value, signalGridRef.value]) {
@@ -155,6 +156,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  document.documentElement.classList.remove('monitor-scrollbar-theme')
   resizeObserver?.disconnect()
   window.removeEventListener('resize', scheduleLayout)
   cancelAnimationFrame(layoutFrame)

@@ -289,7 +289,7 @@ components:
             threshold: { type: number }
             wearRate: { type: number }
             remainingLife: { type: number }
-            stage: { type: string }
+            stage: { type: string, enum: [初始状态, 轻微磨损, 稳定磨损, 加速磨损, 临界状态] }
             status: { type: string, enum: [normal, warning, danger] }
         signals:
           type: array
@@ -329,7 +329,7 @@ components:
             properties:
               label: { type: string }
               value: { type: string }
-              tone: { type: string, enum: [success, warning, danger, info] }
+              tone: { type: string, enum: [success, warning, danger, info, stage-initial, stage-light, stage-stable, stage-accelerated, stage-critical] }
         activeAlert:
           nullable: true
           type: object

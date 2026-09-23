@@ -1,4 +1,5 @@
 import type { ConfigurationOptions, DashboardState, ProcessSample, SensorSeries, SignalChannel, TimePoint } from '@/types/dashboard'
+import { classifyWearStage } from '@/features/dashboard/wearStages'
 import machiningVideo from '@/assets/dashboard/数控铣床用可转位刀具粗切削注射模镶件.mp4'
 
 const pointCount = 42
@@ -38,6 +39,8 @@ const predictionHistory = wearHistory.map((item, index) => ({
   value: Number((item.value + (index > 18 ? (index - 18) * 0.0022 : 0.006)).toFixed(3)),
 }))
 
+const initialWearStage = classifyWearStage(0.18, 0.3)
+
 const processHistory: ProcessSample[] = Array.from({ length: pointCount }, (_, index) => ({
   time: timeLabel(index),
   spindleSpeed: Math.round(12000 + Math.sin(index * 0.8) * 260 + (Math.random() - 0.5) * 120),
@@ -71,8 +74,8 @@ export const initialDashboardState: DashboardState = {
     threshold: 0.3,
     wearRate: 0.012,
     remainingLife: 18.6,
-    stage: '稳定磨损',
-    status: 'warning',
+    stage: initialWearStage.label,
+    status: initialWearStage.status,
   },
   twinVideo: {
     src: machiningVideo,

@@ -2,7 +2,7 @@
   <DashboardPanel title="刀具局部磨损演化" :icon="Picture" :no-padding="true">
     <div class="wear-sampling-head">
       <span>历史磨损数据</span>
-      <strong>窗口：6 · 当前阶段：{{ store.wear.stage }}</strong>
+      <strong :class="`wear-stage--${currentWearStage.code}`">窗口：6 · 当前阶段：{{ currentWearStage.label }}</strong>
     </div>
 
     <div class="wear-sampling-strip" role="list" aria-label="历史磨损采样">
@@ -46,6 +46,7 @@ import referenceDesign from '@/assets/dashboard/reference-design.png'
 import DashboardPanel from './DashboardPanel.vue'
 import { useDashboardStore } from '@/stores/dashboard'
 import type { TimePoint } from '@/types/dashboard'
+import { classifyWearStage } from '@/features/dashboard/wearStages'
 
 interface WearSample {
   id: string
@@ -57,6 +58,7 @@ interface WearSample {
 }
 
 const store = useDashboardStore()
+const currentWearStage = computed(() => classifyWearStage(store.wear.currentWear, store.wear.threshold))
 
 // 这些位置暂时复用设计稿中的磨损图像。接入 n 秒采样接口后，可直接填充 imageUrl。
 const sampleCrops = [

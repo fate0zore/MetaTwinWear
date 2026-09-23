@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class SampleGenerator {
-    public static final double WEAR_THRESHOLD = 0.3;
+    public static final double WEAR_THRESHOLD = WearStagePolicy.DEFAULT_THRESHOLD;
     private final Random random = new Random();
 
     public TelemetrySample seed(String runId, String configurationId, long sequence, long capturedAtMs) {
@@ -68,12 +68,9 @@ public class SampleGenerator {
     private void applyWearMetrics(TelemetrySample sample) {
         sample.wearRate = round(0.012 + Math.max(0, sample.wearValue - 0.18) * 0.03, 3);
         sample.remainingLife = round(Math.max(0, 18.6 - Math.max(0, sample.wearValue - 0.18) * 100), 1);
-        sample.status = sample.wearValue >= WEAR_THRESHOLD ? "danger" : sample.wearValue >= 0.18 ? "warning" : "normal";
-        sample.stage = switch (sample.status) {
-            case "danger" -> "临界状态";
-            case "warning" -> "稳定磨损";
-            default -> "轻微磨损";
-        };
+        WearStagePolicy.Classification wearStage = WearStagePolicy.classify(sample.wearValue, WEAR_THRESHOLD);
+        sample.status = wearStage.status();
+        sample.stage = wearStage.label();
     }
 
     private double round(double value, int digits) {

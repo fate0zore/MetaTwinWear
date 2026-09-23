@@ -5,7 +5,7 @@
     <div class="prediction-summary">
       <div><span>当前磨损</span><strong>{{ store.wear.currentWear.toFixed(2) }} mm</strong></div>
       <div><span>磨损阈值</span><strong>{{ store.wear.threshold.toFixed(2) }} mm</strong></div>
-      <div><span>状态</span><strong class="warning-text">{{ store.wear.stage }}</strong></div>
+      <div><span>状态</span><strong :class="`wear-stage--${currentWearStage.code}`">{{ currentWearStage.label }}</strong></div>
     </div>
   </DashboardPanel>
 </template>
@@ -17,8 +17,10 @@ import { DataAnalysis } from '@element-plus/icons-vue'
 import BaseChart from './BaseChart.vue'
 import DashboardPanel from './DashboardPanel.vue'
 import { useDashboardStore } from '@/stores/dashboard'
+import { classifyWearStage } from '@/features/dashboard/wearStages'
 
 const store = useDashboardStore()
+const currentWearStage = computed(() => classifyWearStage(store.wear.currentWear, store.wear.threshold))
 
 type DataZoomEvent = {
   batch?: DataZoomEvent[]
@@ -70,11 +72,15 @@ const handleDataZoom = (event: DataZoomEvent) => {
   zoomSelection.endChangedByUser = zoomSelection.endChangedByUser || nextEnd !== currentEnd
 }
 
-const option = computed<EChartsOption>(() => ({
+const option = computed<EChartsOption>(() => {
+  const threshold = Number.isFinite(store.wear.threshold) && store.wear.threshold > 0 ? store.wear.threshold : 0.3
+  const warningThreshold = threshold * 0.5
+  const chartMax = Math.max(0.5, threshold * 1.25)
+  return {
   animation: false,
   grid: { left: 62, right: 18, top: 24, bottom: 60, containLabel: true },
   xAxis: { type: 'category', name: '加工时间 (min)', nameLocation: 'middle', nameGap: 28, nameTextStyle: { color: '#86a7b9', fontSize: 12 }, data: store.wearHistory.map((item) => item.time), axisLabel: { color: '#60859b', fontSize: 12 }, axisLine: { lineStyle: { color: '#174a67' } } },
-  yAxis: { type: 'value', min: 0, max: 0.5, name: '磨损量 VB (mm)', nameLocation: 'middle', nameGap: 42, nameRotate: 90, nameTextStyle: { color: '#86a7b9', fontSize: 12 }, axisLabel: { color: '#60859b', fontSize: 12 }, splitLine: { lineStyle: { color: 'rgba(43, 104, 137, .18)' } } },
+  yAxis: { type: 'value', min: 0, max: chartMax, name: '磨损量 VB (mm)', nameLocation: 'middle', nameGap: 42, nameRotate: 90, nameTextStyle: { color: '#86a7b9', fontSize: 12 }, axisLabel: { color: '#60859b', fontSize: 12 }, splitLine: { lineStyle: { color: 'rgba(43, 104, 137, .18)' } } },
   dataZoom: [
     {
       type: 'slider',
@@ -120,8 +126,9 @@ const option = computed<EChartsOption>(() => ({
   ],
   tooltip: { trigger: 'axis', backgroundColor: '#071b2b', borderColor: '#12648b', textStyle: { color: '#bfefff' } },
   series: [
-    { name: '实际磨损', type: 'line', data: store.wearHistory.map((item) => item.value), symbol: 'circle', symbolSize: 4, lineStyle: { color: '#2cbcff', width: 2 }, itemStyle: { color: '#2cbcff' }, markArea: { silent: true, data: [[{ yAxis: 0, itemStyle: { color: 'rgba(0, 185, 164, .14)' } }, { yAxis: 0.2 }], [{ yAxis: 0.2, itemStyle: { color: 'rgba(246, 190, 64, .15)' } }, { yAxis: 0.3 }], [{ yAxis: 0.3, itemStyle: { color: 'rgba(245, 74, 86, .16)' } }, { yAxis: 0.5 }]] }, markLine: { silent: true, symbol: 'none', data: [{ yAxis: store.wear.threshold, lineStyle: { color: '#ff545b', type: 'dashed' }, label: { formatter: '阈值 0.30 mm', color: '#ff7373' } }] } },
-    { name: '预测磨损', type: 'line', data: store.predictionHistory.map((item) => item.value), symbol: 'none', lineStyle: { color: '#5ed8ff', type: 'dashed', width: 1.5 } },
+    { name: '实际磨损', type: 'line', data: store.wearHistory.map((item) => item.value), symbol: 'circle', symbolSize: 4, lineStyle: { color: '#23bdf7', width: 2 }, itemStyle: { color: '#23bdf7' }, markArea: { silent: true, data: [[{ yAxis: 0, itemStyle: { color: 'rgba(0, 185, 164, .14)' } }, { yAxis: warningThreshold }], [{ yAxis: warningThreshold, itemStyle: { color: 'rgba(246, 190, 64, .15)' } }, { yAxis: threshold }], [{ yAxis: threshold, itemStyle: { color: 'rgba(245, 74, 86, .16)' } }, { yAxis: chartMax }]] }, markLine: { silent: true, symbol: 'none', data: [{ yAxis: threshold, lineStyle: { color: '#ff545b', type: 'dashed' }, label: { formatter: `阈值 ${threshold.toFixed(2)} mm`, color: '#ff7373' } }] } },
+    { name: '预测磨损', type: 'line', data: store.predictionHistory.map((item) => item.value), symbol: 'none', lineStyle: { color: '#f2b84d', type: 'dashed', width: 1.5 } },
   ],
-}))
+  }
+})
 </script>

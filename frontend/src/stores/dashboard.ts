@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 
 import { cloneDashboardState } from '@/mock/dashboard'
 import type { ApiSnapshot, ConfigurationOptions, DashboardState, ProcessSample, SensorSeries, SignalChannel, TimePoint, ToolCatalogItem } from '@/types/dashboard'
+import { classifyWearStage } from '@/features/dashboard/wearStages'
 
 const nextPoint = (lastValue: number, index: number, drift = 0, amplitude = 1): number =>
   Number((lastValue + Math.sin(index * 1.27) * amplitude * 0.48 + (Math.random() - 0.5) * amplitude + drift).toFixed(2))
@@ -127,8 +128,9 @@ export const useDashboardStore = defineStore('dashboard', {
       this.wear.currentWear = nextWear
       this.wear.wearRate = Number((0.012 + Math.max(0, nextWear - 0.18) * 0.03).toFixed(3))
       this.wear.remainingLife = Number(Math.max(0, 18.6 - Math.max(0, nextWear - 0.18) * 100).toFixed(1))
-      this.wear.status = nextWear >= this.wear.threshold ? 'danger' : nextWear >= 0.18 ? 'warning' : 'normal'
-      this.wear.stage = this.wear.status === 'danger' ? '临界状态' : this.wear.status === 'warning' ? '稳定磨损' : '轻微磨损'
+      const wearStage = classifyWearStage(nextWear, this.wear.threshold)
+      this.wear.status = wearStage.status
+      this.wear.stage = wearStage.label
       if (this.wear.status === 'danger') this.alertVisible = true
     },
   },
