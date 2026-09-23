@@ -1037,3 +1037,72 @@ html.monitor-scrollbar-theme .alert-dialog:hover {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
 }
+
+.recommendation-item {
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  column-gap: 7px;
+}
+
+.recommendation-item strong.recommendation-value {
+  max-width: 100%;
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.recommendation-icon {
+  box-sizing: border-box;
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(55, 154, 184, .5);
+  border-radius: 2px;
+}
+
+.recommendation-kind-status .recommendation-icon {
+  border-color: transparent;
+  color: var(--green);
+}
+
+.recommendation-kind-status .recommendation-icon .el-icon {
+  display: none;
+}
+
+.recommendation-kind-status .recommendation-icon::before {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  content: '';
+}
+
+.recommendation-kind-status .recommendation-value {
+  color: var(--wear-stage-color, #c4f2ff);
+  background: var(--wear-stage-background, transparent);
+}
+
+.recommendation-kind-risk .recommendation-icon,
+.recommendation-kind-risk .recommendation-value {
+  color: var(--red);
+}
+
+.recommendation-kind-risk .recommendation-value {
+  background: rgba(255, 78, 88, .12);
+}
+
+.recommendation-kind-risk.tone-success .recommendation-icon,
+.recommendation-kind-risk.tone-success .recommendation-value {
+  color: var(--green);
+}
+
+.recommendation-kind-risk.tone-success .recommendation-value {
+  background: rgba(104, 220, 164, .12);
+}
+
+.recommendation-kind-advice .recommendation-value {
+  color: var(--yellow);
+  background: rgba(244, 190, 70, .1);
+}

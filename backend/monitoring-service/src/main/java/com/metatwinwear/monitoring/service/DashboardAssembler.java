@@ -41,7 +41,7 @@ public class DashboardAssembler {
         List<Recommendation> recommendations = List.of(
                 new Recommendation("当前状态", wear.stage(), classification.recommendationTone()),
                 new Recommendation("风险等级", riskValue, riskTone),
-                new Recommendation("剩余寿命", "≤ " + Math.max(5, (int) Math.ceil(wear.remainingLife())) + " min", riskTone),
+                new Recommendation("剩余寿命 RUL", "≤ " + Math.max(5, (int) Math.ceil(wear.remainingLife())) + " min", riskTone),
                 new Recommendation("建议", "完成当前加工后更换刀具", "info"),
                 new Recommendation("建议剩余加工时间", "≤ 5 min", riskTone),
                 new Recommendation("建议监测参数", "主轴振动、切削力", "info"));
