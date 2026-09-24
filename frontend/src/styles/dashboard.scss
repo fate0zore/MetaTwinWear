@@ -554,6 +554,30 @@ html.monitor-scrollbar-theme .alert-dialog:hover {
 @media (min-width: 1280px) {
   .panel-heading { height: 32px; }
 
+  .center-column > .digital-twin-panel,
+  .center-column > .digital-twin-panel .twin-stage {
+    flex-grow: 1;
+  }
+
+  .right-rail > .dashboard-panel:first-child,
+  .right-rail > .dashboard-panel:last-child {
+    flex: 1 0 auto;
+  }
+
+  .right-rail > .dashboard-panel:first-child > .panel-content,
+  .right-rail > .dashboard-panel:last-child > .panel-content {
+    flex: 1 0 auto;
+  }
+
+  .right-rail > .dashboard-panel:first-child .prediction-chart-wrap,
+  .right-rail > .dashboard-panel:last-child .recommendation-list {
+    flex: 1 0 auto;
+  }
+
+  .right-rail > .dashboard-panel:last-child .recommendation-item {
+    flex: 1 0 auto;
+  }
+
   .parameter-display-select .el-select__wrapper {
     height: 26px;
     min-height: 26px;

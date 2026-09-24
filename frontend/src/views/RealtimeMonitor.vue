@@ -1,6 +1,7 @@
 <template>
   <div class="app-shell flex min-h-dvh flex-col">
     <DashboardHeader />
+    <!-- API 尚未就绪时显示连接状态，并在断开后提供重试入口。 -->
     <div v-if="store.dataSource === 'api' && !store.apiReady" class="api-loading-state" role="status">
       <p>{{ store.apiError || '正在连接后端监控服务…' }}</p>
       <el-button v-if="store.apiConnection === 'disconnected'" @click="connectApi">重试连接</el-button>
@@ -11,7 +12,10 @@
       :style="{ '--dashboard-grid-template': desktopGridTemplate }"
       class="dashboard-body grid w-full flex-[1_0_auto] grid-cols-[minmax(0,1fr)] items-stretch gap-2 p-2 md:grid-cols-[minmax(300px,1.1fr)_minmax(0,1.4fr)] md:gap-2.5 md:p-2.5 xl:grid-cols-[var(--dashboard-grid-template)] xl:gap-0 xl:p-[7px] min-[1541px]:p-[11px]"
     >
+      <!-- 主内容网格：承载实时监测各栏，并在桌面端提供可调列宽。 -->
+      <!-- 中栏按此顺序展示实时信号、数字孪生和工艺参数，窄屏时纵向排列。 -->
       <section id="dashboard-center-column" ref="centerColumnRef" class="center-column flex min-w-0 flex-col gap-2.5 md:col-start-2 md:row-start-1 md:h-full md:self-stretch xl:col-start-3">
+        <!-- 实时信号区：标题控制图表显隐，折叠时同步禁用图表交互。 -->
         <div ref="signalSectionRef" class="signal-section">
           <div ref="signalHeadingRef" class="panel-heading">
             <button
@@ -43,6 +47,7 @@
         <ProcessParameterChart />
       </section>
 
+      <!-- 左栏集中放置加工配置表单，并通过插槽展示刀具磨损演化。 -->
       <aside id="dashboard-left-column" ref="leftColumnRef" class="left-rail flex min-w-0 flex-col gap-2.5 md:col-start-1 md:row-start-1 md:h-full xl:col-start-1">
         <ConfigForm @toggle="toggleMonitoring" @reset="resetMonitoring" @retry="connectApi" @configuration-change="saveConfiguration">
           <template #process-replacement>
@@ -51,6 +56,7 @@
         </ConfigForm>
       </aside>
 
+      <!-- 右栏汇总磨损预测、当前状态和维护建议；平板下预测卡跨两行。 -->
       <aside id="dashboard-right-column" ref="rightColumnRef" class="right-rail flex min-w-0 flex-col gap-2.5 md:col-span-2 md:row-start-2 md:grid md:grid-cols-[minmax(0,1.25fr)_minmax(240px,1fr)] md:items-stretch xl:col-span-1 xl:col-start-5 xl:row-start-1 xl:flex xl:h-full">
         <PredictionChart class="md:col-start-1 md:row-span-2 xl:col-auto xl:row-auto" />
         <div class="right-status-card md:col-start-2 xl:col-auto">
@@ -60,6 +66,7 @@
         <RecommendationList class="md:col-start-2 xl:col-auto" />
       </aside>
 
+      <!-- 桌面分隔条支持指针拖动、方向键微调和恢复默认列宽。 -->
       <div
         class="dashboard-column-resizer hidden xl:col-start-2 xl:row-start-1 xl:flex"
         role="separator"
@@ -466,9 +473,8 @@ function updateTwinStageCap() {
   if (!center || !twin || !twinHeading) return
 
   const isCompactDesktop = window.innerWidth < 1280
-  const processHeight = isCompactDesktop
-    ? 360
-    : Math.min(500, Math.max(200, window.innerHeight - 700))
+  // 桌面多出的纵向空间留给数字孪生视频区，工艺图表维持 200px 基准高度。
+  const processHeight = isCompactDesktop ? 360 : 200
   const available = window.innerHeight - twin.getBoundingClientRect().top
     - twinHeading.getBoundingClientRect().height - 10 - processHeight - 9
   const minimumStageHeight = isCompactDesktop ? 180 : 275
