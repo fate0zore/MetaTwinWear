@@ -8,15 +8,20 @@
     <main v-else class="dashboard-body">
       <section ref="centerColumnRef" class="center-column">
         <div ref="signalSectionRef" class="signal-section">
-          <div ref="signalHeadingRef" class="signal-section-heading">
-            <span>实时信号</span>
+          <div ref="signalHeadingRef" class="panel-heading">
             <button
               type="button"
-              class="signal-toggle"
+              class="panel-heading-title signal-heading-toggle"
               aria-controls="realtime-signal-charts"
               :aria-expanded="signalChartsExpanded"
+              :aria-label="signalChartsExpanded ? '收起实时信号图表' : '展开实时信号图表'"
               @click="toggleSignalCharts"
-            >{{ signalChartsExpanded ? '收起图表' : '展开图表' }}<span aria-hidden="true">{{ signalChartsExpanded ? '⌃' : '⌄' }}</span></button>
+            >
+              <span class="heading-mark"></span>
+              <el-icon :size="14"><DataLine /></el-icon>
+              <span>实时信号</span>
+              <span class="signal-toggle-icon" aria-hidden="true">{{ signalChartsExpanded ? '⌃' : '⌄' }}</span>
+            </button>
           </div>
           <div
             id="realtime-signal-charts"
