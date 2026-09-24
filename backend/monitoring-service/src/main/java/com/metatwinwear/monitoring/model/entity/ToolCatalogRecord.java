@@ -3,7 +3,7 @@ package com.metatwinwear.monitoring.model.entity;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 
-/** A cutter specification imported from the local tool catalogue. */
+/** Persistence entity for a cutter specification imported from the local tool catalogue. */
 @TableName("tool_catalog")
 public class ToolCatalogRecord {
     @TableId

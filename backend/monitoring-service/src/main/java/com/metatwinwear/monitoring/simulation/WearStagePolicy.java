@@ -32,6 +32,11 @@ public final class WearStagePolicy {
         return stage(4);
     }
 
+    /** Creates the immutable classification assigned to a stage index.
+     *
+     * @param index stage index from zero through four
+     * @return stage label, code, status, and display tone
+     */
     private static Classification stage(int index) {
         return switch (index) {
             case 1 -> new Classification("轻微磨损", "light", "normal", "stage-light");

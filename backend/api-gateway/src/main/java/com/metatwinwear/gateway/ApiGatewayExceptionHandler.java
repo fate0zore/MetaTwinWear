@@ -28,16 +28,24 @@ public class ApiGatewayExceptionHandler implements WebExceptionHandler {
 
     private final ObjectMapper objectMapper;
 
-    /** Creates the handler with the application's JSON serializer. */
+    /** Creates the handler with the application's JSON serializer.
+     *
+     * @param objectMapper configured JSON serializer
+     */
     public ApiGatewayExceptionHandler(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 
-    /** Wraps errors under the business API prefix and leaves infrastructure errors untouched. */
+    /** Wraps errors under the business API prefix and leaves infrastructure errors untouched.
+     *
+     * @param exchange current gateway exchange
+     * @param error failure raised while processing the request
+     * @return reactive completion of the error response
+     */
     @Override
     public Mono<Void> handle(ServerWebExchange exchange, Throwable error) {
         String path = exchange.getRequest().getPath().value();
-        if (!(path.equals("/api/v1") || path.startsWith(API_PREFIX)) || exchange.getResponse().isCommitted()) {
+        if (!("/api/v1".equals(path) || path.startsWith(API_PREFIX)) || exchange.getResponse().isCommitted()) {
             return Mono.error(error);
         }
 
@@ -55,7 +63,11 @@ public class ApiGatewayExceptionHandler implements WebExceptionHandler {
         }
     }
 
-    /** Derives a safe status from known HTTP and network failures. */
+    /** Derives a safe status from known HTTP and network failures.
+     *
+     * @param error failure raised while processing the request
+     * @return matching shared API status
+     */
     private ApiStatus statusFor(Throwable error) {
         for (Throwable cause = error; cause != null; cause = cause.getCause()) {
             if (cause instanceof ResponseStatusException responseStatus) {
@@ -71,16 +83,24 @@ public class ApiGatewayExceptionHandler implements WebExceptionHandler {
         return ApiStatus.SERVICE_UNAVAILABLE;
     }
 
-    /** Restricts response status codes to those represented by the shared enum. */
+    /** Restricts response status codes to those represented by the shared enum.
+     *
+     * @param statusCode original HTTP status
+     * @return matching or fallback API status
+     */
     private ApiStatus mapStatus(HttpStatusCode statusCode) {
-        try {
-            return ApiStatus.fromCode(statusCode.value());
-        } catch (IllegalArgumentException ignored) {
-            return statusCode.is4xxClientError() ? ApiStatus.BAD_REQUEST : ApiStatus.INTERNAL_SERVER_ERROR;
-        }
+        return ApiStatus.findByCode(statusCode.value())
+                .orElseGet(() -> statusCode.is4xxClientError()
+                        ? ApiStatus.BAD_REQUEST
+                        : ApiStatus.INTERNAL_SERVER_ERROR);
     }
 
-    /** Exposes client-safe reasons and hides internal server failure details. */
+    /** Exposes client-safe reasons and hides internal server failure details.
+     *
+     * @param error failure raised while processing the request
+     * @param status mapped API status
+     * @return safe response message
+     */
     private String messageFor(Throwable error, ApiStatus status) {
         if (error instanceof ResponseStatusException responseStatus
                 && status.getCode() < 500 && responseStatus.getReason() != null

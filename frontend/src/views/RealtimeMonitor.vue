@@ -82,10 +82,18 @@ const toggleMonitoring = () => {
   else mock.start()
 }
 const resetMonitoring = () => {
-  if (store.dataSource === 'api') void api.control('reset')
-  else mock.reset()
+  if (store.dataSource === 'api') {
+    void api.control('reset').then((snapshot) => {
+      if (snapshot) store.resetLocalConfiguration(snapshot.tool, snapshot.workpiece)
+    })
+  } else mock.reset()
 }
-const saveConfiguration = () => { if (store.dataSource === 'api') void api.saveConfiguration() }
+const saveConfiguration = () => store.persistLocalConfiguration()
+const syncConfigurationFromOtherTab = (event: StorageEvent) => {
+  if (event.key === `metatwinwear.configuration.${store.dataSource}.v1`) {
+    store.syncLocalConfiguration(event.newValue)
+  }
+}
 const signalIcons = [DataLine, TrendCharts, DataLine, Grid]
 
 const centerColumnRef = ref<HTMLElement | null>(null)
@@ -146,7 +154,9 @@ function toggleSignalCharts() {
 
 onMounted(() => {
   document.documentElement.classList.add('monitor-scrollbar-theme')
-  connectApi()
+  if (store.dataSource === 'api') connectApi()
+  else store.initializeLocalConfiguration(store.tool, store.workpiece)
+  window.addEventListener('storage', syncConfigurationFromOtherTab)
   resizeObserver = new ResizeObserver(scheduleLayout)
   for (const element of [signalHeadingRef.value, signalGridRef.value]) {
     if (element) resizeObserver.observe(element)
@@ -159,6 +169,7 @@ onBeforeUnmount(() => {
   document.documentElement.classList.remove('monitor-scrollbar-theme')
   resizeObserver?.disconnect()
   window.removeEventListener('resize', scheduleLayout)
+  window.removeEventListener('storage', syncConfigurationFromOtherTab)
   cancelAnimationFrame(layoutFrame)
 })
 </script>

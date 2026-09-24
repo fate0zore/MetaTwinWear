@@ -1,6 +1,7 @@
 package com.metatwinwear.common.response;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 /** HTTP status codes and default messages used by API responses. */
 public enum ApiStatus {
@@ -26,31 +27,60 @@ public enum ApiStatus {
     private final String message;
     private final boolean success;
 
+    /** Creates one shared API status definition.
+     *
+     * @param code HTTP response code
+     * @param message default safe response message
+     * @param success whether the status represents success
+     */
     ApiStatus(int code, String message, boolean success) {
         this.code = code;
         this.message = message;
         this.success = success;
     }
 
-    /** Returns the matching status or rejects unsupported status codes explicitly. */
+    /** Returns the matching status or rejects unsupported status codes explicitly.
+     *
+     * @param code HTTP response code
+     * @return matching status definition
+     * @throws IllegalArgumentException when the code is not defined
+     */
     public static ApiStatus fromCode(int code) {
-        return Arrays.stream(values())
-                .filter(status -> status.code == code)
-                .findFirst()
+        return findByCode(code)
                 .orElseThrow(() -> new IllegalArgumentException("未定义的 API 状态码: " + code));
     }
 
-    /** Returns the HTTP response status code. */
+    /** Finds a status without throwing when the code is not in the shared catalog.
+     *
+     * @param code HTTP response code
+     * @return matching status, or empty when it is not defined
+     */
+    public static Optional<ApiStatus> findByCode(int code) {
+        return Arrays.stream(values())
+                .filter(status -> status.code == code)
+                .findFirst();
+    }
+
+    /** Returns the HTTP response status code.
+     *
+     * @return HTTP response code
+     */
     public int getCode() {
         return code;
     }
 
-    /** Returns the default safe message for this status. */
+    /** Returns the default safe message for this status.
+     *
+     * @return default response message
+     */
     public String getMessage() {
         return message;
     }
 
-    /** Indicates whether this is the successful HTTP status. */
+    /** Indicates whether this is the successful HTTP status.
+     *
+     * @return {@code true} when this status represents success
+     */
     public boolean isSuccess() {
         return success;
     }

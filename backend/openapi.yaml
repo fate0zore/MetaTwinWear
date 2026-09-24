@@ -97,7 +97,7 @@ paths:
           $ref: '#/components/responses/ApiError'
   /api/v1/monitoring/reset:
     post:
-      summary: 停止监听、恢复默认配置、创建新运行并重建窗口
+      summary: 停止监听、创建新运行并重建窗口
       responses:
         '200':
           description: 新运行快照；旧运行及采样保留
@@ -105,41 +105,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiResponseSnapshot'
-        default:
-          $ref: '#/components/responses/ApiError'
-  /api/v1/configuration:
-    get:
-      summary: 获取刀具及工件配置
-      responses:
-        '200':
-          description: 当前配置
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponseConfiguration'
-        default:
-          $ref: '#/components/responses/ApiError'
-    put:
-      summary: 整体更新刀具及工件配置
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Configuration'
-      responses:
-        '200':
-          description: 已保存的配置
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponseConfiguration'
-        '400':
-          description: 配置不合法或不在可选范围
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiErrorResponse'
         default:
           $ref: '#/components/responses/ApiError'
   /api/v1/configuration/options:
@@ -194,13 +159,6 @@ components:
           required: [data]
           properties:
             data: { $ref: '#/components/schemas/ConfigurationOptions' }
-    ApiResponseConfiguration:
-      allOf:
-        - $ref: '#/components/schemas/ApiResponseBase'
-        - type: object
-          required: [data]
-          properties:
-            data: { $ref: '#/components/schemas/Configuration' }
     ApiResponseSnapshot:
       allOf:
         - $ref: '#/components/schemas/ApiResponseBase'
@@ -241,6 +199,7 @@ components:
         imageUrl: { type: string, format: uri-reference }
     Configuration:
       type: object
+      description: 快照中的后端默认配置；用户在页面选择的配置由浏览器本地保存。
       required: [tool, workpiece]
       properties:
         tool:

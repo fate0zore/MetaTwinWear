@@ -15,7 +15,6 @@
           popper-class="dashboard-select-popper tool-catalog-select-popper"
           filterable
           :filter-method="filterToolOptions"
-          :disabled="store.apiConnection !== 'connected' || store.configSaving"
           placeholder="输入型号或产品名称搜索"
           no-data-text="未找到匹配刀具"
           @change="handleToolSelected"

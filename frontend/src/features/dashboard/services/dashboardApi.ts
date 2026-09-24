@@ -1,4 +1,4 @@
-import type { ApiResponse, ApiSnapshot, ConfigurationOptions, ToolCatalogItem, ToolConfig, WorkpieceConfig } from '@/types/dashboard'
+import type { ApiResponse, ApiSnapshot, ConfigurationOptions, ToolCatalogItem } from '@/types/dashboard'
 
 const base = '/api/v1'
 
@@ -27,12 +27,6 @@ export const dashboardApi = {
   options: () => request<ConfigurationOptions>('/configuration/options'),
   tools: () => request<ToolCatalogItem[]>('/tools'),
   control: (action: 'start' | 'stop' | 'reset') => request<ApiSnapshot>(`/monitoring/${action}`, { method: 'POST' }),
-  configuration: (tool: ToolConfig, workpiece: WorkpieceConfig) =>
-    request<{ tool: ToolConfig; workpiece: WorkpieceConfig }>('/configuration', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tool, workpiece }),
-    }),
   events: (
     onSnapshot: (snapshot: ApiSnapshot) => void,
     onConnection: (connected: boolean) => void,

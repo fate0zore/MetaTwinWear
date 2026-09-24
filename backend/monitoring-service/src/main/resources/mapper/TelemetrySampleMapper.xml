@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.metatwinwear.monitoring.mapper.TelemetrySampleMapper">
+    <select id="recent" resultType="com.metatwinwear.monitoring.model.entity.TelemetrySample">
+        SELECT id,
+               run_id AS runId,
+               sequence,
+               captured_at_ms AS capturedAtMs,
+               spindle_speed AS spindleSpeed,
+               feed_rate AS feedRate,
+               cutting_depth AS cuttingDepth,
+               cutting_width AS cuttingWidth,
+               vibration_value AS vibrationValue,
+               current_value AS currentValue,
+               sound_value AS soundValue,
+               force_value AS forceValue,
+               force_x AS forceX,
+               force_y AS forceY,
+               force_z AS forceZ,
+               wear_value AS wearValue,
+               predicted_wear_value AS predictedWearValue,
+               wear_rate AS wearRate,
+               remaining_life AS remainingLife,
+               stage,
+               status
+        FROM telemetry_sample
+        WHERE run_id = #{runId}
+        ORDER BY sequence DESC
+        LIMIT #{limit}
+    </select>
+</mapper>

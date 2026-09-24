@@ -13,6 +13,9 @@ spring:
   flyway:
     locations: classpath:db/migration
 
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+
 metatwinwear:
   tool-catalog:
     image-root: ${METATWINWEAR_TOOL_IMAGE_ROOT:}

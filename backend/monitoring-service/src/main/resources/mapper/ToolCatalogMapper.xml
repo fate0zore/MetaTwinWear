@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.metatwinwear.monitoring.mapper.ToolCatalogMapper">
+    <select id="selectCatalogue" resultType="com.metatwinwear.monitoring.model.entity.ToolCatalogRecord">
+        SELECT model,
+               sort_order AS sortOrder,
+               type,
+               diameter,
+               length,
+               tooth_count AS toothCount,
+               material,
+               description,
+               image_path AS imagePath
+        FROM tool_catalog
+        ORDER BY sort_order
+    </select>
+</mapper>

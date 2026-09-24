@@ -5,10 +5,11 @@ import com.metatwinwear.monitoring.model.entity.TelemetrySample;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
 
+/** Provides persistence operations for telemetry samples. */
 @Mapper
 public interface TelemetrySampleMapper extends BaseMapper<TelemetrySample> {
-    @Select("SELECT * FROM telemetry_sample WHERE run_id = #{runId} ORDER BY sequence DESC LIMIT #{limit}")
+
+    /** Returns at most {@code limit} samples for a run, newest sequence first. */
     List<TelemetrySample> recent(@Param("runId") String runId, @Param("limit") int limit);
 }

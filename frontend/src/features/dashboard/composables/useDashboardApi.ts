@@ -2,6 +2,7 @@ import { onBeforeUnmount } from 'vue'
 
 import { dashboardApi } from '@/features/dashboard/services/dashboardApi'
 import { useDashboardStore } from '@/stores/dashboard'
+import type { ApiSnapshot } from '@/types/dashboard'
 
 export function useDashboardApi() {
   const store = useDashboardStore()
@@ -33,6 +34,7 @@ export function useDashboardApi() {
       ])
       store.applyOptions(options)
       store.applyToolCatalog(tools)
+      store.initializeLocalConfiguration(snapshot.tool, snapshot.workpiece)
       store.applySnapshot(snapshot)
       source?.close()
       lastContact = Date.now()
@@ -59,30 +61,15 @@ export function useDashboardApi() {
     }
   }
 
-  async function control(action: 'start' | 'stop' | 'reset') {
+  async function control(action: 'start' | 'stop' | 'reset'): Promise<ApiSnapshot | null> {
     try {
-      store.applySnapshot(await dashboardApi.control(action))
+      const snapshot = await dashboardApi.control(action)
+      store.applySnapshot(snapshot)
+      return snapshot
     } catch (error) {
       store.apiError = error instanceof Error ? error.message : '操作失败'
       store.apiConnection = 'disconnected'
-    }
-  }
-
-  async function saveConfiguration() {
-    store.configSaving = true
-    try {
-      await dashboardApi.configuration(store.tool, store.workpiece)
-      store.applySnapshot(await dashboardApi.snapshot())
-    } catch (error) {
-      store.apiError = error instanceof Error ? error.message : '配置保存失败'
-      try {
-        store.applySnapshot(await dashboardApi.snapshot())
-      } catch {
-        store.apiConnection = 'disconnected'
-      }
-      store.apiError = error instanceof Error ? error.message : '配置保存失败'
-    } finally {
-      store.configSaving = false
+      return null
     }
   }
 
@@ -90,5 +77,5 @@ export function useDashboardApi() {
     source?.close()
     if (retryTimer !== null) window.clearInterval(retryTimer)
   })
-  return { connect, control, saveConfiguration }
+  return { connect, control }
 }

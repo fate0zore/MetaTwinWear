@@ -8,7 +8,7 @@
           ref="videoRef"
           class="twin-video"
           :src="store.twinVideo.src"
-          aria-label="数控铣床切削加工视频"
+          aria-label="数控铣床切削加工"
           autoplay
           muted
           loop
@@ -45,7 +45,7 @@
         <div
           class="timeline-bar"
           role="progressbar"
-          aria-label="五阶段磨损演化进度"
+          aria-label="磨损演化进度"
           aria-valuemin="0"
           aria-valuemax="100"
           :aria-valuenow="Math.round(currentWearStage.progressPercent)"

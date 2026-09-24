@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 
 import { cloneDashboardState } from '@/mock/dashboard'
-import type { ApiSnapshot, ConfigurationOptions, DashboardState, ProcessSample, SensorSeries, SignalChannel, TimePoint, ToolCatalogItem } from '@/types/dashboard'
+import type { ApiSnapshot, ConfigurationOptions, DashboardState, ProcessSample, SensorSeries, SignalChannel, TimePoint, ToolCatalogItem, ToolConfig, WorkpieceConfig } from '@/types/dashboard'
 import { classifyWearStage } from '@/features/dashboard/wearStages'
 
 const nextPoint = (lastValue: number, index: number, drift = 0, amplitude = 1): number =>
@@ -30,12 +30,67 @@ const updateSignal = (signal: SensorSeries, index: number) => {
   })
 }
 
+const localConfigurationKey = (source: DashboardState['dataSource']) =>
+  `metatwinwear.configuration.${source}.v1`
+
+function normalizeStoredConfiguration(value: unknown, state: DashboardState): {
+  tool: ToolConfig
+  workpiece: WorkpieceConfig
+} | null {
+  if (value === null || typeof value !== 'object') return null
+  const configuration = value as Record<string, unknown>
+  if (configuration.tool === null || typeof configuration.tool !== 'object'
+    || configuration.workpiece === null || typeof configuration.workpiece !== 'object') return null
+
+  const tool = configuration.tool as Record<string, unknown>
+  const workpiece = configuration.workpiece as Record<string, unknown>
+  if (typeof tool.model !== 'string' || typeof tool.type !== 'string'
+    || typeof tool.diameter !== 'number' || typeof tool.length !== 'number'
+    || typeof tool.toothCount !== 'number' || typeof tool.material !== 'string'
+    || typeof workpiece.size !== 'string' || typeof workpiece.material !== 'string'
+    || !state.configOptions.workpieceSizes.includes(workpiece.size)
+    || !state.configOptions.workpieceMaterials.includes(workpiece.material)) return null
+
+  if (state.dataSource === 'api') {
+    const item = state.toolCatalog.find((candidate) => candidate.model === tool.model)
+    if (!item) return null
+    return {
+      tool: {
+        model: item.model,
+        type: item.type,
+        diameter: item.diameter,
+        length: item.length,
+        toothCount: item.toothCount,
+        material: item.material,
+      },
+      workpiece: { size: workpiece.size, material: workpiece.material },
+    }
+  }
+
+  if (!state.configOptions.toolModels.includes(tool.model)
+    || !state.configOptions.toolTypes.includes(tool.type)
+    || !state.configOptions.diameters.includes(tool.diameter)
+    || !state.configOptions.lengths.includes(tool.length)
+    || !state.configOptions.toothCounts.includes(tool.toothCount)
+    || !state.configOptions.materials.includes(tool.material)) return null
+
+  return {
+    tool: {
+      model: tool.model,
+      type: tool.type,
+      diameter: tool.diameter,
+      length: tool.length,
+      toothCount: tool.toothCount,
+      material: tool.material,
+    },
+    workpiece: { size: workpiece.size, material: workpiece.material },
+  }
+}
+
 export const useDashboardStore = defineStore('dashboard', {
   state: (): DashboardState => cloneDashboardState(),
   actions: {
     applySnapshot(snapshot: ApiSnapshot) {
-      this.tool = snapshot.tool
-      this.workpiece = snapshot.workpiece
       this.process = snapshot.process
       this.wear = snapshot.wear
       this.monitoring = snapshot.monitoring
@@ -55,14 +110,72 @@ export const useDashboardStore = defineStore('dashboard', {
       this.processHistory = snapshot.processHistory
       this.serverRecommendations = snapshot.recommendations
       this.activeAlert = snapshot.activeAlert
-      const storedDismissal = window.localStorage.getItem('metatwinwear.dismissedAlertId')
+      let storedDismissal: string | null = null
+      try {
+        storedDismissal = window.localStorage.getItem('metatwinwear.dismissedAlertId')
+      } catch {
+        // Browser storage is optional for displaying the active alert.
+      }
       this.dismissedAlertId = snapshot.activeAlert?.id === storedDismissal ? storedDismissal : null
-      if (!this.dismissedAlertId && storedDismissal) window.localStorage.removeItem('metatwinwear.dismissedAlertId')
+      if (!this.dismissedAlertId && storedDismissal) {
+        try {
+          window.localStorage.removeItem('metatwinwear.dismissedAlertId')
+        } catch {
+          // Ignore unavailable browser storage.
+        }
+      }
       this.alertVisible = Boolean(snapshot.activeAlert && snapshot.activeAlert.id !== this.dismissedAlertId)
       this.sampledAt = snapshot.sampledAt
       this.apiReady = true
       this.apiConnection = 'connected'
       this.apiError = ''
+    },
+    initializeLocalConfiguration(defaultTool: ToolConfig, defaultWorkpiece: WorkpieceConfig) {
+      if (this.configurationInitialized) return
+      this.configurationInitialized = true
+      this.tool = { ...defaultTool }
+      this.workpiece = { ...defaultWorkpiece }
+      try {
+        const key = localConfigurationKey(this.dataSource)
+        const serialized = window.localStorage.getItem(key)
+        if (serialized === null) return
+        const stored = normalizeStoredConfiguration(JSON.parse(serialized) as unknown, this.$state)
+        if (stored) {
+          this.tool = stored.tool
+          this.workpiece = stored.workpiece
+        } else {
+          window.localStorage.removeItem(key)
+        }
+      } catch {
+        // Keep the current defaults if browser storage is unavailable or malformed.
+      }
+    },
+    persistLocalConfiguration() {
+      try {
+        window.localStorage.setItem(localConfigurationKey(this.dataSource), JSON.stringify({
+          tool: this.tool,
+          workpiece: this.workpiece,
+        }))
+      } catch {
+        // The configuration remains usable in memory if browser storage is unavailable.
+      }
+    },
+    syncLocalConfiguration(serialized: string | null) {
+      if (serialized === null) return
+      try {
+        const stored = normalizeStoredConfiguration(JSON.parse(serialized) as unknown, this.$state)
+        if (!stored) return
+        this.tool = stored.tool
+        this.workpiece = stored.workpiece
+      } catch {
+        // Ignore malformed updates from another tab.
+      }
+    },
+    resetLocalConfiguration(defaultTool: ToolConfig, defaultWorkpiece: WorkpieceConfig) {
+      this.configurationInitialized = true
+      this.tool = { ...defaultTool }
+      this.workpiece = { ...defaultWorkpiece }
+      this.persistLocalConfiguration()
     },
     applyOptions(options: ConfigurationOptions) {
       this.configOptions = options
@@ -86,7 +199,11 @@ export const useDashboardStore = defineStore('dashboard', {
     dismissAlert() {
       this.dismissedAlertId = this.activeAlert?.id ?? null
       if (this.dataSource === 'api' && this.dismissedAlertId) {
-        window.localStorage.setItem('metatwinwear.dismissedAlertId', this.dismissedAlertId)
+        try {
+          window.localStorage.setItem('metatwinwear.dismissedAlertId', this.dismissedAlertId)
+        } catch {
+          // The alert can still be dismissed in memory if browser storage is unavailable.
+        }
       }
       this.alertVisible = false
     },
@@ -95,6 +212,8 @@ export const useDashboardStore = defineStore('dashboard', {
     },
     reset() {
       Object.assign(this, cloneDashboardState())
+      this.configurationInitialized = true
+      this.persistLocalConfiguration()
     },
     tick() {
       const index = this.wearHistory.length

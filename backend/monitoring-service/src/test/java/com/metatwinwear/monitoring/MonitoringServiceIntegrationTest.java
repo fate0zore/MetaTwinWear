@@ -1,21 +1,20 @@
 package com.metatwinwear.monitoring;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.metatwinwear.monitoring.model.dto.ApiModels.ConfigurationPayload;
 import com.metatwinwear.monitoring.model.dto.ApiModels.DashboardSnapshot;
-import com.metatwinwear.monitoring.model.dto.ApiModels.ToolConfig;
-import com.metatwinwear.monitoring.mapper.ConfigurationRevisionMapper;
 import com.metatwinwear.monitoring.mapper.MonitoringRunMapper;
 import com.metatwinwear.monitoring.mapper.ToolCatalogMapper;
 import com.metatwinwear.monitoring.mapper.TelemetrySampleMapper;
-import com.metatwinwear.monitoring.model.entity.ConfigurationRevision;
 import com.metatwinwear.monitoring.model.entity.TelemetrySample;
 import com.metatwinwear.monitoring.model.entity.ToolCatalogRecord;
 import com.metatwinwear.monitoring.service.MonitoringService;
 import com.metatwinwear.monitoring.service.SseHub;
 import com.metatwinwear.monitoring.service.ToolCatalogService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -42,7 +41,6 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
@@ -62,13 +60,11 @@ class MonitoringServiceIntegrationTest {
 
     @Autowired MonitoringService service;
     @Autowired ToolCatalogService toolCatalog;
-    @Autowired ConfigurationRevisionMapper configurations;
     @Autowired MonitoringRunMapper runs;
     @Autowired TelemetrySampleMapper samples;
     @Autowired ToolCatalogMapper tools;
     @Autowired SseHub events;
     @Autowired MockMvc mockMvc;
-    @Autowired ObjectMapper objectMapper;
 
     @Test
     void importsCatalogueRecordsAndServesTheirImages() throws Exception {
@@ -108,22 +104,18 @@ class MonitoringServiceIntegrationTest {
     @Test
     void wrapsJsonEndpointsAndSseSnapshotPayload() throws Exception {
         mockMvc.perform(get("/api/v1/configuration"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.data.tool.model").exists());
-        mockMvc.perform(put("/api/v1/configuration")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(service.configuration())))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("配置已保存"))
-                .andExpect(jsonPath("$.data.tool.model").value(ToolCatalogService.DEFAULT_TOOL_MODEL));
+                .andExpect(status().isNotFound());
         mockMvc.perform(get("/api/v1/configuration/options"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.toolModels", hasSize(13)));
         mockMvc.perform(get("/api/v1/monitoring/snapshot"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.runId").exists());
+                .andExpect(jsonPath("$.data.runId").exists())
+                .andExpect(jsonPath("$.data.tool.model").value(ToolCatalogService.DEFAULT_TOOL_MODEL));
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/v1/configuration")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isNotFound());
 
         mockMvc.perform(post("/api/v1/monitoring/start"))
                 .andExpect(status().isOk())
@@ -169,34 +161,9 @@ class MonitoringServiceIntegrationTest {
 
     @Test
     void returnsConsistentEnvelopesForValidationRoutingAndUnexpectedErrors() throws Exception {
-        ConfigurationPayload original = service.configuration();
-        ToolConfig tool = original.tool();
-        ConfigurationPayload mismatched = new ConfigurationPayload(
-                new ToolConfig(tool.model(), tool.type(), tool.diameter() + 1, tool.length(),
-                        tool.toothCount(), tool.material()), original.workpiece());
-        mockMvc.perform(put("/api/v1/configuration")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(mismatched)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value(400))
-                .andExpect(jsonPath("$.message").value("刀具型号与规格不匹配，或工件配置不在可选范围内"));
-
-        mockMvc.perform(put("/api/v1/configuration")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"tool\":{\"model\":\"\",\"type\":\"\",\"diameter\":0,\"length\":0,\"toothCount\":0,\"material\":\"\"},\"workpiece\":{\"size\":\"\",\"material\":\"\"}}"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value(400))
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").isNotEmpty());
-
         mockMvc.perform(post("/api/v1/configuration/options"))
                 .andExpect(status().isMethodNotAllowed())
                 .andExpect(jsonPath("$.code").value(405));
-        mockMvc.perform(put("/api/v1/configuration")
-                        .contentType(MediaType.TEXT_PLAIN)
-                        .content("not-json"))
-                .andExpect(status().isUnsupportedMediaType())
-                .andExpect(jsonPath("$.code").value(415));
         mockMvc.perform(get("/api/v1/no-such-endpoint"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(404));
@@ -208,21 +175,12 @@ class MonitoringServiceIntegrationTest {
     }
 
     @Test
-    void persistsConfigurationSamplesAndOldRunsAcrossReset() {
+    void keepsSamplesAndOldRunsAcrossReset() {
         DashboardSnapshot initial = service.snapshot();
         assertFalse(initial.monitoring());
         assertEquals(42, initial.wearHistory().size());
+        assertEquals(ToolCatalogService.DEFAULT_TOOL_MODEL, initial.tool().model());
         String oldRunId = initial.runId();
-        ConfigurationPayload original = service.configuration();
-        ToolCatalogRecord selected = tools.selectCatalogue().get(1);
-        ToolConfig changedTool = new ToolConfig(selected.model, selected.type, selected.diameter,
-                selected.length, selected.toothCount, selected.material);
-        service.updateConfiguration(new ConfigurationPayload(changedTool, original.workpiece()));
-        assertEquals(changedTool, service.configuration().tool());
-        ToolConfig mismatchedTool = new ToolConfig(selected.model, selected.type, selected.diameter + 1,
-                selected.length, selected.toothCount, selected.material);
-        assertThrows(IllegalArgumentException.class,
-                () -> service.updateConfiguration(new ConfigurationPayload(mismatchedTool, original.workpiece())));
 
         assertTrue(service.start().monitoring());
         assertTrue(service.start().monitoring());
@@ -236,33 +194,14 @@ class MonitoringServiceIntegrationTest {
         assertNotEquals(oldRunId, reset.runId());
         assertFalse(reset.monitoring());
         assertEquals(42, reset.wearHistory().size());
-        assertEquals(original, service.configuration());
+        assertEquals(ToolCatalogService.DEFAULT_TOOL_MODEL, reset.tool().model());
         assertNotNull(runs.selectById(oldRunId));
         assertTrue(samples.recent(oldRunId, 100).size() > 42);
-        assertTrue(configurations.selectCount(null) >= 3);
 
         service.start();
         service.initialize(); // same recovery path used at process startup
         assertFalse(service.snapshot().monitoring());
         assertEquals(reset.runId(), service.snapshot().runId());
-
-        ConfigurationRevision latest = configurations.latest();
-        ConfigurationRevision legacy = new ConfigurationRevision();
-        legacy.id = UUID.randomUUID().toString();
-        legacy.version = latest.version + 1;
-        legacy.createdAtMs = System.currentTimeMillis();
-        legacy.model = "Φ12 立铣刀（硬质合金）";
-        legacy.type = "立铣刀";
-        legacy.diameter = 12;
-        legacy.length = 75;
-        legacy.toothCount = 4;
-        legacy.material = "硬质合金";
-        legacy.workpieceSize = "120 × 80 × 50";
-        legacy.workpieceMaterial = "镍基高温合金 (Inconel 718)";
-        configurations.insert(legacy);
-        service.initialize();
-        assertNotNull(configurations.selectById(legacy.id));
-        assertEquals(ToolCatalogService.DEFAULT_TOOL_MODEL, service.configuration().tool().model());
     }
 
     @TestConfiguration(proxyBeanMethods = false)

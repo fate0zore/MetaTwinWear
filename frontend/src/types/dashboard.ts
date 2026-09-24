@@ -97,8 +97,8 @@ export interface DashboardState {
   apiConnection: 'loading' | 'connected' | 'disconnected'
   apiError: string
   apiReady: boolean
+  configurationInitialized: boolean
   sampledAt: string | null
-  configSaving: boolean
   toolCatalog: ToolCatalogItem[]
   configOptions: ConfigurationOptions
   serverRecommendations: ApiRecommendation[]

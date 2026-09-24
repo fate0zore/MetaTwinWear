@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.metatwinwear.monitoring.mapper.MonitoringRunMapper">
+    <select id="latest" resultType="com.metatwinwear.monitoring.model.entity.MonitoringRun">
+        SELECT id,
+               status,
+               created_at_ms AS createdAtMs,
+               stopped_at_ms AS stoppedAtMs,
+               active_alert_id AS activeAlertId,
+               alert_at_ms AS alertAtMs
+        FROM monitoring_run
+        ORDER BY rowid DESC
+        LIMIT 1
+    </select>
+</mapper>

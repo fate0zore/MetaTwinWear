@@ -1,0 +1,9 @@
+backend/**/*.java text eol=lf
+backend/**/*.xml text eol=lf
+backend/**/*.yml text eol=lf
+backend/**/*.yaml text eol=lf
+backend/**/*.sql text eol=lf
+backend/**/*.md text eol=lf
+backend/*.md text eol=lf
+backend/**/*.gradle text eol=lf
+backend/**/*.properties text eol=lf

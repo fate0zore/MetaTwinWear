@@ -3,6 +3,7 @@ package com.metatwinwear.monitoring.model.entity;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 
+/** Persistence entity for one monitoring run. */
 @TableName("monitoring_run")
 public class MonitoringRun {
     @TableId
