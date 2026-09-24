@@ -1,6 +1,6 @@
 <template>
-  <header class="dashboard-header">
-    <div class="brand-lockup">
+  <header class="dashboard-header flex h-auto min-h-16 w-full shrink-0 flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2.5 md:min-h-[78px] md:gap-3.5 md:px-4 md:py-2 xl:h-[78px] xl:flex-nowrap xl:py-0 min-[1541px]:gap-7 min-[1541px]:px-7">
+    <div class="brand-lockup flex min-w-0 flex-[1_1_100%] items-center gap-3 md:flex-[0_1_31%] xl:flex-initial">
       <div class="brand-logo">
         <img :src="swjtuCrest" alt="西南交通大学" />
       </div>
@@ -10,7 +10,7 @@
       </div>
     </div>
 
-    <nav class="main-nav" aria-label="主导航">
+    <nav class="main-nav order-3 grid w-full min-w-0 flex-none grid-cols-2 justify-center gap-1 min-[480px]:grid-cols-5 xl:order-none xl:flex xl:w-auto xl:flex-1 xl:self-stretch" aria-label="主导航">
       <RouterLink
         v-for="item in navItems"
         :key="item.path"

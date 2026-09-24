@@ -10,7 +10,7 @@
 - **应该**：默认遵守；确有合理原因时可以偏离。
 - **可以**：允许采用，但不是强制要求。
 
-项目当前技术栈：Vue 3、TypeScript、Vite、Pinia、Element Plus、ECharts、SCSS。
+项目当前技术栈：Vue 3、TypeScript、Vite、Pinia、Element Plus、ECharts、Tailwind CSS v4、SCSS。
 
 ## 2. Agent 工作方式
 
@@ -126,6 +126,14 @@ src/
 - 优先保证桌面和大屏布局，同时兼顾平板宽度下的可用性。
 - 以现代主流浏览器为支持目标，不为过旧浏览器增加未经要求的兼容层。
 - 统一复用现有设计变量、面板、标题和图表等视觉基础组件。
+
+### Tailwind CSS 与 SCSS 分工
+
+- Dashboard 的页面骨架、导航排列、栏位顺序和主要图表网格优先使用 Tailwind 响应式工具类；`md` 对应 `768px`，`xl` 对应 `1280px`。
+- Tailwind 通过 Vite 插件接入，只导入 theme 和 utilities，不启用 Preflight，避免重置 Element Plus 与现有基础样式。
+- 颜色、面板装饰、图表细节和复杂交互样式沿用现有 CSS 变量与 SCSS；新增样式应复用已有设计变量。
+- 同一元素的同一布局属性不得同时由 Tailwind 工具类和未分层的 SCSS 规则控制；迁移布局时同步移除旧规则及其断点覆盖。
+- Tailwind 类名应以完整静态字符串写在 Vue 模板中，确保构建时能够扫描到响应式类。
 
 ### 字体与字号
 

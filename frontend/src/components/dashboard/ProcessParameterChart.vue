@@ -3,7 +3,7 @@
     <template #actions>
       <span class="chart-live-status"><i></i>{{ store.monitoring ? '实时采集中' : '等待监听' }}</span>
     </template>
-    <div class="process-chart-grid">
+    <div class="process-chart-grid grid grid-cols-1 gap-[7px] px-2.5 pb-2.5 pt-[9px] md:grid-cols-2 md:grid-rows-2 xl:grid-cols-4 xl:grid-rows-[minmax(0,1fr)]">
       <div v-for="card in cards" :key="card.key" class="process-chart-card">
         <div class="process-chart-card-head">
           <span><i :style="{ backgroundColor: card.color, boxShadow: `0 0 7px ${card.color}` }"></i>{{ card.label }}</span>
@@ -27,7 +27,7 @@ import { useDashboardStore } from '@/stores/dashboard'
 const store = useDashboardStore()
 const makeOption = (values: number[], color: string, unit: string): EChartsOption => ({
     animation: false,
-    grid: { left: 31, right: 8, top: 12, bottom: 22 },
+    grid: { left: 8, right: 8, top: 12, bottom: 22, containLabel: true },
     tooltip: { trigger: 'axis', backgroundColor: '#071b2b', borderColor: '#12648b', textStyle: { color: '#bfefff' } },
     xAxis: { type: 'category', data: store.processHistory.map((item) => item.time), axisLabel: { color: '#60859b', fontSize: 12, interval: 9 }, axisLine: { lineStyle: { color: '#174a67' } }, boundaryGap: false },
     yAxis: { type: 'value', name: unit, nameTextStyle: { color: '#60859b', fontSize: 12 }, axisLabel: { color: '#60859b', fontSize: 12 }, splitLine: { lineStyle: { color: 'rgba(43, 104, 137, .18)' } } },
