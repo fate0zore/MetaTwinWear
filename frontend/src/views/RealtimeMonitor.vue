@@ -15,33 +15,31 @@
       <!-- 主内容网格：承载实时监测各栏，并在桌面端提供可调列宽。 -->
       <!-- 中栏按此顺序展示实时信号、数字孪生和工艺参数，窄屏时纵向排列。 -->
       <section id="dashboard-center-column" ref="centerColumnRef" class="center-column flex min-w-0 flex-col gap-2.5 md:col-start-2 md:row-start-1 md:h-full md:self-stretch xl:col-start-3">
-        <!-- 实时信号区：标题控制图表显隐，折叠时同步禁用图表交互。 -->
+        <!-- 实时信号区：使用 Element Plus 折叠面板控制图表显隐。 -->
         <div ref="signalSectionRef" class="signal-section">
-          <div ref="signalHeadingRef" class="panel-heading">
-            <button
-              type="button"
-              class="panel-heading-title signal-heading-toggle"
-              aria-controls="realtime-signal-charts"
-              :aria-expanded="signalChartsExpanded"
-              :aria-label="signalChartsExpanded ? '收起实时信号图表' : '展开实时信号图表'"
-              @click="toggleSignalCharts"
-            >
-              <span class="heading-mark"></span>
-              <el-icon :size="14"><DataLine /></el-icon>
-              <span>实时信号</span>
-              <span class="signal-toggle-icon" aria-hidden="true">{{ signalChartsExpanded ? '⌃' : '⌄' }}</span>
-            </button>
-          </div>
-          <div
-            id="realtime-signal-charts"
-            ref="signalGridRef"
-            class="signal-grid mt-1.5 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4"
-            :class="{ 'is-collapsed': !signalChartsExpanded }"
-            :aria-hidden="!signalChartsExpanded"
-            :inert="!signalChartsExpanded"
+          <el-collapse
+            class="dashboard-collapse"
+            v-model="signalCollapseActiveNames"
           >
-            <RealtimeSignalChart v-for="(signal, index) in store.signals" :key="signal.id" :signal="signal" :icon="signalIcons[index]" />
-          </div>
+            <el-collapse-item name="realtime-signals">
+              <template #title>
+                <div ref="signalHeadingRef" class="panel-heading-title signal-collapse-title">
+                  <span class="heading-mark"></span>
+                  <el-icon :size="14"><DataLine /></el-icon>
+                  <span>实时信号</span>
+                </div>
+              </template>
+              <div
+                id="realtime-signal-charts"
+                ref="signalGridRef"
+                class="signal-grid mt-1.5 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4"
+                :aria-hidden="!signalChartsExpanded"
+                :inert="!signalChartsExpanded"
+              >
+                <RealtimeSignalChart v-for="(signal, index) in store.signals" :key="signal.id" :signal="signal" :icon="signalIcons[index]" />
+              </div>
+            </el-collapse-item>
+          </el-collapse>
         </div>
         <DigitalTwinPanel />
         <ProcessParameterChart />
@@ -206,8 +204,19 @@ const rightColumnRef = ref<HTMLElement | null>(null)
 const signalSectionRef = ref<HTMLElement | null>(null)
 const signalHeadingRef = ref<HTMLElement | null>(null)
 const signalGridRef = ref<HTMLElement | null>(null)
-const signalChartsExpanded = ref(false)
+const signalChartsExpanded = ref(true)
 const manualSignalChoice = ref<boolean | null>(null)
+const signalCollapseActiveNames = computed<string | number | Array<string | number>>({
+  get: () => signalChartsExpanded.value ? ['realtime-signals'] : [],
+  set: (activeNames) => {
+    const isExpanded = Array.isArray(activeNames)
+      ? activeNames.includes('realtime-signals')
+      : activeNames === 'realtime-signals'
+    manualSignalChoice.value = isExpanded
+    signalChartsExpanded.value = isExpanded
+    nextTick(updateTwinStageCap)
+  },
+})
 const leftColumnWidth = ref(DEFAULT_SIDE_MIN_WIDTH)
 const rightColumnWidth = ref(DEFAULT_SIDE_MIN_WIDTH)
 const availableColumnWidth = ref(0)
@@ -470,16 +479,45 @@ function updateTwinStageCap() {
   const center = centerColumnRef.value
   const twin = center?.querySelector<HTMLElement>('.digital-twin-panel')
   const twinHeading = twin?.querySelector<HTMLElement>('.panel-heading')
-  if (!center || !twin || !twinHeading) return
+  const processPanel = center?.querySelector<HTMLElement>('.process-parameter-panel')
+  if (!center || !twin || !twinHeading || !processPanel) return
 
   const isCompactDesktop = window.innerWidth < 1280
-  // 桌面多出的纵向空间留给数字孪生视频区，工艺图表维持 200px 基准高度。
-  const processHeight = isCompactDesktop ? 360 : 200
+  const expandedProcessHeight = isCompactDesktop ? 360 : 200
+  // 折叠后按标题栏实际高度计算视频区空间，展开时仍保留原工艺图表高度。
+  const processHeight = processPanel.classList.contains('is-collapsed')
+    ? processPanel.getBoundingClientRect().height
+    : expandedProcessHeight
   const available = window.innerHeight - twin.getBoundingClientRect().top
     - twinHeading.getBoundingClientRect().height - 10 - processHeight - 9
   const minimumStageHeight = isCompactDesktop ? 180 : 275
-  center.style.setProperty('--process-panel-viewport-height', `${processHeight}px`)
+  center.style.setProperty('--process-panel-viewport-height', `${expandedProcessHeight}px`)
   center.style.setProperty('--twin-stage-viewport-cap', `${Math.max(minimumStageHeight, Math.floor(available))}px`)
+}
+
+function getSignalGridHeight(grid: HTMLElement): number {
+  const renderedHeight = grid.getBoundingClientRect().height
+  if (renderedHeight > 0) return renderedHeight
+
+  const firstPanel = grid.querySelector<HTMLElement>('.signal-panel')
+  const chartTitle = firstPanel?.querySelector<HTMLElement>('.chart-title-row')
+  const chart = firstPanel?.querySelector<HTMLElement>('.signal-chart-wrap')
+  if (!firstPanel || !chartTitle || !chart || grid.children.length === 0) return 0
+
+  const panelStyle = getComputedStyle(firstPanel)
+  const gridStyle = getComputedStyle(grid)
+  const cardHeight = parseFloat(getComputedStyle(chartTitle).height)
+    + parseFloat(getComputedStyle(chart).height)
+    + (parseFloat(panelStyle.borderTopWidth) || 0)
+    + (parseFloat(panelStyle.borderBottomWidth) || 0)
+  const repeatedColumns = gridStyle.gridTemplateColumns.match(/^repeat\((\d+),/)
+  const measuredColumns = gridStyle.gridTemplateColumns === 'none'
+    ? 0
+    : gridStyle.gridTemplateColumns.trim().split(/\s+/).length
+  const columns = Number(repeatedColumns?.[1]) || measuredColumns || (window.innerWidth >= 1280 ? 4 : window.innerWidth >= 768 ? 2 : 1)
+  const rowCount = Math.ceil(grid.children.length / columns)
+  const rowGap = parseFloat(gridStyle.rowGap) || 0
+  return rowCount * cardHeight + Math.max(0, rowCount - 1) * rowGap
 }
 
 function updateAutomaticLayout() {
@@ -499,7 +537,7 @@ function updateAutomaticLayout() {
       ? stage.getBoundingClientRect().height
       : parseFloat(getComputedStyle(stage).minHeight) || 275
     const requiredBottom = section.getBoundingClientRect().top
-      + heading.getBoundingClientRect().height + gridMargin + grid.getBoundingClientRect().height
+      + heading.getBoundingClientRect().height + gridMargin + getSignalGridHeight(grid)
       + columnGap + twinHeading.getBoundingClientRect().height
       + minimumStage + 8
     signalChartsExpanded.value = requiredBottom <= window.innerHeight
@@ -512,12 +550,6 @@ function scheduleLayout() {
   layoutFrame = requestAnimationFrame(updateAutomaticLayout)
 }
 
-function toggleSignalCharts() {
-  manualSignalChoice.value = !signalChartsExpanded.value
-  signalChartsExpanded.value = manualSignalChoice.value
-  nextTick(updateTwinStageCap)
-}
-
 onMounted(() => {
   document.documentElement.classList.add('monitor-scrollbar-theme')
   if (store.dataSource === 'api') connectApi()
@@ -525,7 +557,8 @@ onMounted(() => {
   window.addEventListener('storage', syncConfigurationFromOtherTab)
   resizeObserver = new ResizeObserver(scheduleLayout)
   columnResizeObserver = new ResizeObserver(handleDashboardGridResize)
-  for (const element of [signalHeadingRef.value, signalGridRef.value]) {
+  const processPanel = centerColumnRef.value?.querySelector<HTMLElement>('.process-parameter-panel')
+  for (const element of [signalHeadingRef.value, signalGridRef.value, processPanel]) {
     if (element) resizeObserver.observe(element)
   }
   if (dashboardGridRef.value) columnResizeObserver.observe(dashboardGridRef.value)

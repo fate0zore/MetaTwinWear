@@ -1,30 +1,47 @@
 <template>
-  <DashboardPanel class="process-parameter-panel" :title="store.dataSource === 'api' ? '设备工艺参数监听' : '设备工艺参数监听（Mock）'" :icon="Connection" :no-padding="true">
-    <template #actions>
-      <span class="chart-live-status"><i></i>{{ store.monitoring ? '实时采集中' : '等待监听' }}</span>
-    </template>
-    <div class="process-chart-grid grid grid-cols-1 gap-[7px] px-2.5 pb-2.5 pt-[9px] md:grid-cols-2 md:grid-rows-2 xl:grid-cols-4 xl:grid-rows-[minmax(0,1fr)]">
-      <div v-for="card in cards" :key="card.key" class="process-chart-card">
-        <div class="process-chart-card-head">
-          <span><i :style="{ backgroundColor: card.color, boxShadow: `0 0 7px ${card.color}` }"></i>{{ card.label }}</span>
-          <strong>{{ card.value }}<small>{{ card.unit }}</small></strong>
+  <section
+    class="dashboard-panel panel-no-padding process-parameter-panel"
+    :class="{ 'is-collapsed': !processChartsExpanded }"
+  >
+    <el-collapse v-model="processCollapseActiveNames" class="dashboard-collapse process-parameter-collapse">
+      <el-collapse-item name="process-parameters">
+        <template #title>
+          <div class="panel-heading-title process-parameter-collapse-title">
+            <span class="heading-mark"></span>
+            <el-icon :size="14"><Connection /></el-icon>
+            <span>{{ store.dataSource === 'api' ? '设备工艺参数监听' : '设备工艺参数监听（Mock）' }}</span>
+          </div>
+          <span class="chart-live-status process-parameter-collapse-status">
+            <i></i>{{ store.monitoring ? '实时采集中' : '等待监听' }}
+          </span>
+        </template>
+        <div class="panel-content process-parameter-content" :aria-hidden="!processChartsExpanded" :inert="!processChartsExpanded">
+          <div class="process-chart-grid grid grid-cols-1 gap-[7px] px-2.5 pb-2.5 pt-[9px] md:grid-cols-2 md:grid-rows-2 xl:grid-cols-4 xl:grid-rows-[minmax(0,1fr)]">
+            <div v-for="card in cards" :key="card.key" class="process-chart-card">
+              <div class="process-chart-card-head">
+                <span><i :style="{ backgroundColor: card.color, boxShadow: `0 0 7px ${card.color}` }"></i>{{ card.label }}</span>
+                <strong>{{ card.value }}<small>{{ card.unit }}</small></strong>
+              </div>
+              <div class="process-mini-chart"><BaseChart :option="card.option" /></div>
+            </div>
+          </div>
         </div>
-        <div class="process-mini-chart"><BaseChart :option="card.option" /></div>
-      </div>
-    </div>
-  </DashboardPanel>
+      </el-collapse-item>
+    </el-collapse>
+  </section>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { EChartsOption } from 'echarts'
 import { Connection } from '@element-plus/icons-vue'
 
 import BaseChart from './BaseChart.vue'
-import DashboardPanel from './DashboardPanel.vue'
 import { useDashboardStore } from '@/stores/dashboard'
 
 const store = useDashboardStore()
+const processCollapseActiveNames = ref<string[]>(['process-parameters'])
+const processChartsExpanded = computed(() => processCollapseActiveNames.value.includes('process-parameters'))
 const makeOption = (values: number[], color: string, unit: string): EChartsOption => ({
     animation: false,
     grid: { left: 8, right: 8, top: 12, bottom: 22, containLabel: true },

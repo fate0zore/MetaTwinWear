@@ -84,15 +84,40 @@ html.monitor-scrollbar-theme .alert-dialog:hover {
 .header-action { color: #6a9bb1; margin-left: 9px; }
 
 .signal-section { position: relative; min-width: 0; }
-.signal-heading-toggle { padding: 0; border: 0; color: inherit; background: transparent; font: inherit; text-align: left; cursor: pointer; }
-.signal-heading-toggle:hover { color: var(--cyan); }
-.signal-heading-toggle:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
-.signal-toggle-icon { font-size: 11px; line-height: 1; }
-.signal-grid.is-collapsed { position: absolute; top: 100%; left: 0; right: 0; visibility: hidden; pointer-events: none; }
+.dashboard-collapse.el-collapse {
+  --el-collapse-border-color: transparent;
+  --el-collapse-header-height: 35px;
+  --el-collapse-header-bg-color: transparent;
+  --el-collapse-header-text-color: #8fdfff;
+  --el-collapse-header-font-size: 16px;
+  --el-collapse-content-bg-color: transparent;
+  --el-collapse-content-text-color: var(--text);
+  border: 0;
+}
+.dashboard-collapse .el-collapse-item__header {
+  position: relative;
+  z-index: 1;
+  height: var(--el-collapse-header-height);
+  padding: 0 10px;
+  border-bottom: 1px solid rgba(26, 112, 150, .48);
+  color: #8fdfff;
+  background: transparent;
+  font-weight: 700;
+  letter-spacing: .2px;
+  line-height: var(--el-collapse-header-height);
+}
+.dashboard-collapse .el-collapse-item__header:hover { color: var(--cyan); }
+.dashboard-collapse .el-collapse-item__header:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+.dashboard-collapse .el-collapse-item__title { display: flex; align-items: center; flex: 1 1 auto; height: 100%; min-width: 0; overflow: hidden; }
+.signal-collapse-title { height: 100%; }
+.dashboard-collapse .el-collapse-item__arrow { color: inherit; }
+.dashboard-collapse .el-collapse-item__wrap { border-bottom: 0; background: transparent; }
+.dashboard-collapse .el-collapse-item__content { padding: 0; color: inherit; }
 .lower-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(310px, .92fr); gap: 10px; }
 
 .dashboard-panel { position: relative; overflow: hidden; border: 1px solid var(--line-soft); background: linear-gradient(145deg, rgba(5, 32, 52, .94), rgba(2, 18, 31, .94)); box-shadow: inset 0 0 24px rgba(0, 132, 190, .06), 0 5px 18px rgba(0, 0, 0, .2); }
-.dashboard-panel::before { content: ''; position: absolute; z-index: 0; top: -1px; left: 0; width: 28%; height: 2px; background: var(--cyan); box-shadow: 0 0 10px var(--cyan); }
+.dashboard-panel::before,
+.signal-section::before { content: ''; position: absolute; z-index: 0; top: -1px; left: 0; width: 28%; height: 2px; background: var(--cyan); box-shadow: 0 0 10px var(--cyan); }
 .panel-accent { border-color: rgba(0, 194, 255, .72); }
 .panel-danger { border-color: rgba(255, 67, 74, .75); }
 .panel-heading { position: relative; z-index: 1; height: 35px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; border-bottom: 1px solid rgba(26, 112, 150, .48); color: #8fdfff; font-size: 13px; font-weight: 700; letter-spacing: .2px; }
@@ -389,7 +414,29 @@ html.monitor-scrollbar-theme .alert-dialog:hover {
   min-height: 200px;
 }
 
-.process-parameter-panel > .panel-content {
+.center-column > .process-parameter-panel.is-collapsed {
+  flex: 0 0 auto;
+  height: auto;
+  min-height: 0;
+}
+
+.process-parameter-panel > .process-parameter-collapse,
+.process-parameter-collapse > .el-collapse-item {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.process-parameter-collapse .el-collapse-item__wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.process-parameter-collapse-title { flex: 1 1 auto; }
+.process-parameter-collapse-status { flex: 0 1 auto; margin-left: auto; }
+
+.process-parameter-content {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
@@ -491,7 +538,7 @@ html.monitor-scrollbar-theme .alert-dialog:hover {
   .nav-item.active::after { left: 8px; right: 8px; }
 
   .center-column > .process-parameter-panel,
-  .process-parameter-panel > .panel-content { display: block; flex: 0 0 auto; min-height: 0; }
+  .process-parameter-panel .process-parameter-content { display: block; flex: 0 0 auto; min-height: 0; }
   .center-column > .process-parameter-panel { height: auto; }
   .process-parameter-panel .process-chart-grid { flex: 0 0 auto; }
   .process-mini-chart { min-height: 160px; }
@@ -553,6 +600,7 @@ html.monitor-scrollbar-theme .alert-dialog:hover {
 
 @media (min-width: 1280px) {
   .panel-heading { height: 32px; }
+  .dashboard-collapse.el-collapse { --el-collapse-header-height: 32px; }
 
   .center-column > .digital-twin-panel,
   .center-column > .digital-twin-panel .twin-stage {
@@ -671,6 +719,7 @@ html.monitor-scrollbar-theme .alert-dialog:hover {
 .brand-title,
 .nav-item,
 .panel-heading,
+.dashboard-collapse .el-collapse-item__header,
 .form-section-title,
 .readonly-section-title,
 .process-chart-summary strong,
