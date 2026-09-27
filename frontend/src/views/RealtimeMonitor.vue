@@ -116,7 +116,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { DataLine, Grid, TrendCharts } from '@element-plus/icons-vue'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useDashboardMock } from '@/composables/useDashboardMock'
@@ -292,6 +292,10 @@ function clampColumnPair(left: number, right: number, available: number) {
 
 function syncColumnWidthsForViewport() {
   const available = getAvailableColumnWidth()
+  // The dashboard grid is not rendered while API mode is still loading. Keep
+  // the current/default widths until a real layout can be measured.
+  if (available <= 0) return
+
   availableColumnWidth.value = available
 
   if (window.innerWidth < DESKTOP_BREAKPOINT || activeColumnResize) return
@@ -463,11 +467,27 @@ function handleResizeKeydown(event: KeyboardEvent, side: 'left' | 'right') {
 
 function handleDashboardGridResize() {
   const nextWidth = getAvailableColumnWidth()
+  if (nextWidth <= 0) return
+
   const widthChanged = Math.abs(nextWidth - availableColumnWidth.value) > 0.5
   availableColumnWidth.value = nextWidth
   if (widthChanged && !activeColumnResize) syncColumnWidthsForViewport()
   scheduleLayout()
 }
+
+watch(dashboardGridRef, (grid, previousGrid) => {
+  if (!columnResizeObserver) return
+
+  if (previousGrid) columnResizeObserver.unobserve(previousGrid)
+  if (!grid) return
+
+  columnResizeObserver.observe(grid)
+  void nextTick(() => {
+    if (dashboardGridRef.value !== grid) return
+    syncColumnWidthsForViewport()
+    scheduleLayout()
+  })
+}, { flush: 'post' })
 
 function handleWindowResize() {
   cancelActiveColumnResize()
