@@ -86,8 +86,45 @@
 
     <div class="readonly-section-title"><el-icon><Box /></el-icon> 工件信息</div>
     <div class="parameter-display-list">
-      <div class="parameter-display-row"><span>工件尺寸 (mm)</span><el-select v-model="store.workpiece.size" class="parameter-display-select" filterable popper-class="dashboard-select-popper" @change="emit('configurationChange')"><el-option v-for="item in options.workpieceSizes" :key="item" :label="item" :value="item" /></el-select></div>
-      <div class="parameter-display-row"><span>工件材料</span><el-select v-model="store.workpiece.material" class="parameter-display-select" filterable popper-class="dashboard-select-popper" @change="emit('configurationChange')"><el-option v-for="item in options.workpieceMaterials" :key="item" :label="item" :value="item" /></el-select></div>
+      <div class="parameter-display-row">
+        <span>工件尺寸 (mm)</span>
+        <el-select
+          :model-value="store.workpiece.size"
+          class="parameter-display-select"
+          filterable
+          allow-create
+          default-first-option
+          popper-class="dashboard-select-popper"
+          placeholder="选择预设或输入 长×宽×高"
+          no-data-text="回车创建自定义尺寸"
+          :aria-invalid="Boolean(workpieceSizeError)"
+          aria-describedby="workpiece-size-error"
+          @update:model-value="handleWorkpieceSizeChange"
+          @paste="handleWorkpieceSizePaste"
+        >
+          <el-option v-for="item in options.workpieceSizes" :key="item" :label="item" :value="item" />
+        </el-select>
+        <span v-if="workpieceSizeError" id="workpiece-size-error" class="workpiece-field-error" role="alert">{{ workpieceSizeError }}</span>
+      </div>
+      <div class="parameter-display-row">
+        <span>工件材料</span>
+        <el-select
+          :model-value="store.workpiece.material"
+          class="parameter-display-select"
+          filterable
+          allow-create
+          default-first-option
+          popper-class="dashboard-select-popper"
+          placeholder="选择预设或输入材料"
+          no-data-text="回车创建自定义材料"
+          :aria-invalid="Boolean(workpieceMaterialError)"
+          aria-describedby="workpiece-material-error"
+          @update:model-value="handleWorkpieceMaterialChange"
+        >
+          <el-option v-for="item in options.workpieceMaterials" :key="item" :label="item" :value="item" />
+        </el-select>
+        <span v-if="workpieceMaterialError" id="workpiece-material-error" class="workpiece-field-error" role="alert">{{ workpieceMaterialError }}</span>
+      </div>
     </div>
 
     <div class="device-meta-grid">
@@ -102,7 +139,7 @@
       <el-button type="primary" class="start-button" :disabled="store.dataSource === 'api' && store.apiConnection !== 'connected'" @click="emit('toggle')">
         <el-icon><VideoPlay /></el-icon>{{ store.monitoring ? '停止监听' : '开始监听' }}
       </el-button>
-      <el-button class="reset-button" :disabled="store.dataSource === 'api' && store.apiConnection !== 'connected'" @click="emit('reset')"><el-icon><Refresh /></el-icon>重置</el-button>
+      <el-button class="reset-button" :disabled="store.dataSource === 'api' && store.apiConnection !== 'connected'" @click="handleReset"><el-icon><Refresh /></el-icon>重置</el-button>
       <el-button v-if="store.dataSource === 'api' && store.apiConnection === 'disconnected'" @click="emit('retry')">重连</el-button>
     </div>
 
@@ -134,6 +171,7 @@ import { Aim, Box, Refresh, Tools, VideoPlay } from '@element-plus/icons-vue'
 
 import referenceDesign from '@/assets/dashboard/reference-design.png'
 import DashboardPanel from './DashboardPanel.vue'
+import { normalizeWorkpieceSize } from '@/features/dashboard/workpieceDimensions'
 import { useDashboardStore } from '@/stores/dashboard'
 
 const emit = defineEmits<{ toggle: []; reset: []; retry: []; configurationChange: [] }>()
@@ -146,6 +184,8 @@ const options = computed(() => store.configOptions)
 const selectedTool = computed(() => store.toolCatalog.find((item) => item.model === store.tool.model) ?? null)
 const toolSearch = ref('')
 const imageFailed = ref(false)
+const workpieceSizeError = ref('')
+const workpieceMaterialError = ref('')
 const filteredTools = computed(() => {
   const query = toolSearch.value.trim().toLocaleLowerCase()
   if (!query) return store.toolCatalog
@@ -153,6 +193,8 @@ const filteredTools = computed(() => {
 })
 
 watch(() => selectedTool.value?.imageUrl, () => { imageFailed.value = false })
+watch(() => store.workpiece.size, () => { workpieceSizeError.value = '' })
+watch(() => store.workpiece.material, () => { workpieceMaterialError.value = '' })
 
 function filterToolOptions(query: string) {
   toolSearch.value = query
@@ -161,5 +203,43 @@ function filterToolOptions(query: string) {
 function handleToolSelected(model: string) {
   toolSearch.value = ''
   if (store.selectTool(model)) emit('configurationChange')
+}
+
+function handleWorkpieceSizeChange(value: string) {
+  const normalizedSize = normalizeWorkpieceSize(value)
+  if (!normalizedSize) {
+    workpieceSizeError.value = '请输入 3 个大于 0 的尺寸，例如 120 × 80 × 50。'
+    return
+  }
+
+  workpieceSizeError.value = ''
+  store.workpiece.size = normalizedSize
+  emit('configurationChange')
+}
+
+function handleWorkpieceSizePaste(event: ClipboardEvent) {
+  const pastedText = event.clipboardData?.getData('text') ?? ''
+  if (!/[\r\n]/.test(pastedText)) return
+
+  event.preventDefault()
+  handleWorkpieceSizeChange(pastedText)
+}
+
+function handleWorkpieceMaterialChange(value: string) {
+  const normalizedMaterial = value.trim()
+  if (!normalizedMaterial) {
+    workpieceMaterialError.value = '工件材料不能为空。'
+    return
+  }
+
+  workpieceMaterialError.value = ''
+  store.workpiece.material = normalizedMaterial
+  emit('configurationChange')
+}
+
+function handleReset() {
+  workpieceSizeError.value = ''
+  workpieceMaterialError.value = ''
+  emit('reset')
 }
 </script>

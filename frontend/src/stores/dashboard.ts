@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import { cloneDashboardState } from '@/mock/dashboard'
 import type { ApiSnapshot, ConfigurationOptions, DashboardState, ProcessSample, SensorSeries, SignalChannel, TimePoint, ToolCatalogItem, ToolConfig, WorkpieceConfig } from '@/types/dashboard'
 import { classifyWearStage } from '@/features/dashboard/wearStages'
+import { normalizeWorkpieceSize } from '@/features/dashboard/workpieceDimensions'
 
 const nextPoint = (lastValue: number, index: number, drift = 0, amplitude = 1): number =>
   Number((lastValue + Math.sin(index * 1.27) * amplitude * 0.48 + (Math.random() - 0.5) * amplitude + drift).toFixed(2))
@@ -44,12 +45,16 @@ function normalizeStoredConfiguration(value: unknown, state: DashboardState): {
 
   const tool = configuration.tool as Record<string, unknown>
   const workpiece = configuration.workpiece as Record<string, unknown>
+  const normalizedWorkpieceSize = typeof workpiece.size === 'string'
+    ? normalizeWorkpieceSize(workpiece.size)
+    : null
+  const normalizedWorkpieceMaterial = typeof workpiece.material === 'string'
+    ? workpiece.material.trim()
+    : ''
   if (typeof tool.model !== 'string' || typeof tool.type !== 'string'
     || typeof tool.diameter !== 'number' || typeof tool.length !== 'number'
     || typeof tool.toothCount !== 'number' || typeof tool.material !== 'string'
-    || typeof workpiece.size !== 'string' || typeof workpiece.material !== 'string'
-    || !state.configOptions.workpieceSizes.includes(workpiece.size)
-    || !state.configOptions.workpieceMaterials.includes(workpiece.material)) return null
+    || normalizedWorkpieceSize === null || !normalizedWorkpieceMaterial) return null
 
   if (state.dataSource === 'api') {
     const item = state.toolCatalog.find((candidate) => candidate.model === tool.model)
@@ -63,7 +68,7 @@ function normalizeStoredConfiguration(value: unknown, state: DashboardState): {
         toothCount: item.toothCount,
         material: item.material,
       },
-      workpiece: { size: workpiece.size, material: workpiece.material },
+      workpiece: { size: normalizedWorkpieceSize, material: normalizedWorkpieceMaterial },
     }
   }
 
@@ -83,7 +88,7 @@ function normalizeStoredConfiguration(value: unknown, state: DashboardState): {
       toothCount: tool.toothCount,
       material: tool.material,
     },
-    workpiece: { size: workpiece.size, material: workpiece.material },
+    workpiece: { size: normalizedWorkpieceSize, material: normalizedWorkpieceMaterial },
   }
 }
 
