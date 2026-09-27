@@ -169,7 +169,7 @@ html.monitor-scrollbar-theme .alert-dialog:hover {
 
 .twin-stage { position: relative; height: 322px; overflow: hidden; background: linear-gradient(110deg, #061623, #0a2331 50%, #04111e); }
 .twin-media { position: absolute; inset: 0; }
-.twin-video { display: block; width: 100%; height: 100%; object-fit: contain; background: #020b13; }
+.twin-video { display: block; width: 100%; height: 100%; object-fit: contain; background: transparent; }
 .twin-video-feedback { position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; padding: 20px; color: #bdeeff; background: #061623; font-size: 14px; text-align: center; }
 .twin-stream-label { position: absolute; z-index: 2; top: 13px; left: 14px; display: flex; align-items: center; gap: 7px; padding: 6px 9px; border: 1px solid rgba(21, 146, 200, .75); border-radius: 3px; color: #bdeeff; background: rgba(2, 35, 57, .88); font-size: 12px; }
 .twin-stream-label i { width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 7px var(--cyan); }
@@ -933,9 +933,98 @@ html.monitor-scrollbar-theme .alert-dialog:hover {
 }
 
 .wear-detail-image {
+  display: block;
   flex: 1 1 auto;
+  width: 100%;
   min-height: 64px;
+  padding: 0;
+  border: 0;
   background-color: #061825;
+  cursor: zoom-in;
+}
+
+.wear-detail-image:hover {
+  filter: brightness(1.08);
+}
+
+.wear-detail-image:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 2px solid var(--cyan);
+  outline-offset: -3px;
+}
+
+@media (min-width: 768px) {
+  .left-rail > .dashboard-panel:first-child .left-wear-evolution,
+  .left-wear-evolution > .panel-content,
+  .wear-detail-view,
+  .wear-detail-image {
+    flex-basis: 0;
+  }
+}
+
+.wear-image-preview-dialog.el-dialog {
+  overflow: hidden;
+  border: 1px solid rgba(24, 132, 177, .72);
+  border-radius: 4px;
+  background: #071d2b;
+  box-shadow: 0 18px 64px rgba(0, 0, 0, .68), 0 0 28px rgba(0, 180, 225, .14);
+}
+
+.wear-image-preview-dialog .el-dialog__header {
+  margin-right: 0;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid rgba(24, 110, 147, .5);
+}
+
+.wear-image-preview-dialog .el-dialog__headerbtn {
+  top: 12px;
+  right: 12px;
+}
+
+.wear-image-preview-dialog .el-dialog__headerbtn .el-dialog__close {
+  color: #91bdcc;
+}
+
+.wear-image-preview-dialog .el-dialog__headerbtn:hover .el-dialog__close {
+  color: var(--cyan);
+}
+
+.wear-image-preview-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+  padding-right: 30px;
+  color: #d9f5fc;
+}
+
+.wear-image-preview-heading strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.wear-image-preview-heading small {
+  overflow: hidden;
+  color: #83aebe;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wear-image-preview-dialog .el-dialog__body {
+  padding: 16px 20px 20px;
+}
+
+.wear-image-preview-stage {
+  box-sizing: border-box;
+  max-width: 100%;
+  max-height: 72vh;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 1px solid rgba(24, 132, 177, .65);
+  background-color: #061825;
+  background-repeat: no-repeat;
 }
 
 .wear-detail-caption {
@@ -988,6 +1077,18 @@ html.monitor-scrollbar-theme .alert-dialog:hover {
 }
 
 @media (max-width: 767px) {
+  .dashboard-body {
+    align-content: start;
+  }
+
+  .left-rail > .dashboard-panel:first-child,
+  .left-rail > .dashboard-panel:first-child > .panel-content,
+  .left-rail > .dashboard-panel:first-child .left-wear-evolution,
+  .left-wear-evolution > .panel-content,
+  .wear-detail-view {
+    flex: 0 0 auto;
+  }
+
   .wear-sampling-strip {
     grid-template-columns: repeat(6, minmax(86px, 1fr));
     overflow-x: auto;
@@ -996,6 +1097,20 @@ html.monitor-scrollbar-theme .alert-dialog:hover {
 
   .wear-detail-view {
     min-height: 220px;
+  }
+
+  .wear-image-preview-dialog .el-dialog__header {
+    padding: 13px 16px 10px;
+  }
+
+  .wear-image-preview-dialog .el-dialog__body {
+    padding: 12px;
+  }
+
+  .wear-image-preview-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
   }
 
   .wear-current-info {
