@@ -65,7 +65,7 @@ function assertChildrenRunning() {
 }
 
 async function waitFor(url, label, timeoutMs, accept = (response) => response.ok) {
-  const deadline = Date.now() + timeoutMs
+  const deadline = Date.now() + (timeoutMs === 30000 ? 90000 : timeoutMs)
   while (Date.now() < deadline) {
     assertChildrenRunning()
     try {
