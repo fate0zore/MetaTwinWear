@@ -67,6 +67,24 @@
       role="img"
       :aria-label="`${selectedSample.time} 磨损图像，${selectedSample.wear.toFixed(2)} mm`"
     ></div>
+    <div class="wear-image-preview-controls" role="group" aria-label="历史磨损图像切换">
+      <button
+        type="button"
+        :disabled="!canNavigatePrevious"
+        aria-label="上一张磨损图像"
+        @click="navigateSample(-1)"
+      >
+        上一张
+      </button>
+      <button
+        type="button"
+        :disabled="!canNavigateNext"
+        aria-label="下一张磨损图像"
+        @click="navigateSample(1)"
+      >
+        下一张
+      </button>
+    </div>
   </el-dialog>
 </template>
 
@@ -117,14 +135,25 @@ const emptySample: WearSample = {
   imageUrl: earlierWearImage,
 }
 
-const selectedSample = computed<WearSample>(() => {
-  return samples.value.find((sample) => sample.id === selectedSampleId.value)
-    ?? samples.value[samples.value.length - 1]
-    ?? emptySample
+const selectedSampleIndex = computed(() => {
+  const index = samples.value.findIndex((sample) => sample.id === selectedSampleId.value)
+  return index >= 0 ? index : samples.value.length - 1
 })
+
+const selectedSample = computed<WearSample>(() => {
+  return samples.value[selectedSampleIndex.value] ?? emptySample
+})
+
+const canNavigatePrevious = computed(() => selectedSampleIndex.value > 0)
+const canNavigateNext = computed(() => selectedSampleIndex.value >= 0 && selectedSampleIndex.value < samples.value.length - 1)
 
 const selectSample = (sample: WearSample) => {
   selectedSampleId.value = sample.id
+}
+
+const navigateSample = (direction: -1 | 1) => {
+  const sample = samples.value[selectedSampleIndex.value + direction]
+  if (sample) selectSample(sample)
 }
 
 const getSampleImageStyle = (sample: WearSample, fit: 'cover' | 'contain' = 'cover') => ({
