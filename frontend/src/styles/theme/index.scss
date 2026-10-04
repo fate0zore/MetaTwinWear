@@ -1,0 +1,26 @@
+@use './tokens' as tokens;
+
+// Configure Element Plus once so every route and teleported overlay shares this palette.
+@forward 'element-plus/theme-chalk/src/common/var.scss' with (
+  $colors: tokens.$element-colors,
+  $text-color: tokens.$element-text-colors,
+  $border-color: tokens.$element-border-colors,
+  $fill-color: tokens.$element-fill-colors,
+  $bg-color: tokens.$element-background-colors,
+  $border-radius: tokens.$element-border-radii,
+  $font-size: tokens.$element-font-sizes,
+  $button-font-size: tokens.$element-button-font-sizes,
+  $input-font-size: tokens.$element-input-font-sizes,
+  $table-font-size: tokens.$element-table-font-sizes
+);
+
+@forward 'element-plus/theme-chalk/src/dark/var.scss' as dark-* with (
+  $bg-color: tokens.$element-dark-background-colors,
+  $text-color: tokens.$element-dark-text-colors,
+  $border-color: tokens.$element-dark-border-colors,
+  $fill-color: tokens.$element-dark-fill-colors
+);
+
+@use 'element-plus/theme-chalk/src/index.scss';
+@use 'element-plus/theme-chalk/src/dark/css-vars.scss';
+@use './components';

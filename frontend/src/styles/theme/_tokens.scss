@@ -1,0 +1,116 @@
+$bg-deep: #04101a;
+$bg-shell: #061721;
+$panel: rgba(5, 25, 41, .9);
+$panel-strong: #071e30;
+$line: #0b5c86;
+$line-soft: rgba(36, 129, 171, .42);
+$cyan: #18c8ff;
+$cyan-soft: #57d8ff;
+$blue: #1377c9;
+$text: #d4f5ff;
+$muted: #6f9bb1;
+$green: #23d394;
+$wear-stable-color: #35d78c;
+$wear-stable-background: rgba(53, 215, 140, .2);
+$yellow: #f4bd48;
+$orange: #ff8d26;
+$red: #ff4e58;
+$font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+$control-bg: #031521;
+$pagination-bg: rgba(9, 44, 63, .9);
+$pagination-disabled-bg: rgba(5, 27, 42, .9);
+$pagination-border: rgba(24, 110, 147, .45);
+$dialog-border: rgba(24, 132, 177, .72);
+$dialog-header-border: rgba(24, 110, 147, .5);
+$popper-border: rgba(36, 129, 171, .58);
+$scrollbar-track: rgba(4, 22, 36, .82);
+$scrollbar-thumb: #176b8b;
+$scrollbar-thumb-hover: #238db3;
+
+$element-colors: (
+  'primary': ('base': $blue),
+  'success': ('base': $green),
+  'warning': ('base': $yellow),
+  'danger': ('base': $red),
+  'error': ('base': $red),
+  'info': ('base': #6f9bb1),
+);
+
+$element-text-colors: (
+  'primary': $text,
+  'regular': #c4e5ee,
+  'secondary': #8eb6c5,
+  'placeholder': #688da0,
+  'disabled': #557584,
+);
+
+$element-border-colors: (
+  '': $line,
+  'light': rgba(36, 129, 171, .58),
+  'lighter': rgba(36, 129, 171, .38),
+  'extra-light': rgba(36, 129, 171, .24),
+  'dark': #174761,
+  'darker': #12384f,
+);
+
+$element-fill-colors: (
+  '': rgba(9, 44, 63, .9),
+  'light': rgba(5, 36, 55, .8),
+  'lighter': rgba(4, 27, 44, .72),
+  'extra-light': rgba(3, 21, 33, .6),
+  'dark': rgba(13, 62, 86, .84),
+  'darker': rgba(18, 78, 105, .88),
+  'blank': $bg-shell,
+);
+
+$element-background-colors: (
+  'page': $bg-deep,
+  '': $bg-shell,
+  'overlay': $panel-strong,
+);
+
+$element-border-radii: (
+  'base': 3px,
+  'small': 2px,
+  'round': 20px,
+  'circle': 100%,
+);
+
+$element-font-sizes: (
+  'extra-large': 20px,
+  'large': 16px,
+  'medium': 16px,
+  'base': 14px,
+  'small': 12px,
+  'extra-small': 12px,
+);
+
+$element-button-font-sizes: (
+  'large': 16px,
+  'default': 14px,
+  'small': 12px,
+);
+
+$element-input-font-sizes: (
+  'large': 16px,
+  'default': 14px,
+  'small': 12px,
+);
+
+$element-table-font-sizes: (
+  'large': 16px,
+  'default': 14px,
+  'small': 12px,
+);
+
+$element-dark-background-colors: (
+  'page': $bg-deep,
+  '': $bg-shell,
+  'overlay': $panel-strong,
+);
+
+$element-dark-text-colors: $element-text-colors;
+
+$element-dark-border-colors: $element-border-colors;
+
+$element-dark-fill-colors: $element-fill-colors;

@@ -727,7 +727,6 @@ function scheduleLayout() {
 }
 
 onMounted(() => {
-  document.documentElement.classList.add('monitor-scrollbar-theme')
   if (store.dataSource === 'api') connectApi()
   else store.initializeLocalConfiguration(store.tool, store.workpiece)
   window.addEventListener('storage', syncConfigurationFromOtherTab)
@@ -745,7 +744,6 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  document.documentElement.classList.remove('monitor-scrollbar-theme')
   resizeObserver?.disconnect()
   columnResizeObserver?.disconnect()
   window.removeEventListener('resize', handleWindowResize)

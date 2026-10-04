@@ -1,5 +1,5 @@
 <template>
-  <VChart class="base-chart" :option="option" autoresize :theme="theme" @datazoom="handleDataZoom" />
+  <VChart class="base-chart" :option="option" autoresize :theme="theme" @datazoom="handleDataZoom" @click="handleChartClick" />
 </template>
 
 <script setup lang="ts">
@@ -16,6 +16,12 @@ type DataZoomEvent = {
   end?: number
   startValue?: number | string
   endValue?: number | string
+}
+
+export interface ChartClickEvent {
+  dataIndex?: number
+  seriesType?: string
+  componentSubType?: string
 }
 
 use([
@@ -36,7 +42,9 @@ defineProps<{
 
 const emit = defineEmits<{
   datazoom: [event: DataZoomEvent]
+  chartClick: [event: ChartClickEvent]
 }>()
 
 const handleDataZoom = (event: DataZoomEvent) => emit('datazoom', event)
+const handleChartClick = (event: ChartClickEvent) => emit('chartClick', event)
 </script>

@@ -10,7 +10,7 @@
       </div>
     </div>
 
-    <nav class="main-nav order-3 grid w-full min-w-0 flex-none grid-cols-2 justify-center gap-1 min-[480px]:grid-cols-5 xl:order-none xl:flex xl:w-auto xl:flex-1 xl:self-stretch" aria-label="主导航">
+    <nav class="main-nav order-3 grid w-full min-w-0 flex-none grid-cols-2 justify-center gap-1 min-[480px]:grid-cols-4 xl:order-none xl:flex xl:w-auto xl:flex-1 xl:self-stretch" aria-label="主导航">
       <RouterLink
         v-for="item in navItems"
         :key="item.path"
@@ -37,9 +37,10 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
-import { Bell, Clock, DataAnalysis, Monitor, Setting, Warning } from '@element-plus/icons-vue'
+import { Aim, Bell, Box, Clock, DataAnalysis, Monitor, Scissor, Setting, Warning } from '@element-plus/icons-vue'
 import swjtuCrest from '@/assets/dashboard/swjtu-crest.png'
 import { useDashboardStore } from '@/stores/dashboard'
+import { MODULE_ROUTES } from '@/features/modules/routes'
 
 const route = useRoute()
 const store = useDashboardStore()
@@ -57,12 +58,23 @@ const currentTime = computed(() => now.value.toLocaleString('zh-CN', {
 
 const navItems = [
   { label: '实时监测', path: '/monitor', icon: Monitor },
-  { label: '磨损分析', path: '/wear-analysis', icon: DataAnalysis },
-  { label: '预测预警', path: '/prediction-warning', icon: Warning },
-  { label: '历史数据', path: '/history', icon: Clock },
+  // { label: '磨损分析', path: '/wear-analysis', icon: DataAnalysis },
+  // { label: '预测预警', path: '/prediction-warning', icon: Warning },
+  // { label: '历史数据', path: '/history', icon: Clock },
+  { label: '刀具管理', path: MODULE_ROUTES.toolManagement.path, icon: Scissor },
+  { label: '视觉监测', path: MODULE_ROUTES.visualMonitor.path, icon: Aim },
+  { label: '模型优化', path: MODULE_ROUTES.modelOptimization.path, icon: Box },
   { label: '系统设置', path: '/system-settings', icon: Setting },
 ]
 
 onMounted(() => { timer = window.setInterval(() => { now.value = new Date() }, 1000) })
 onBeforeUnmount(() => { if (timer) window.clearInterval(timer) })
 </script>
+
+<!-- <style scoped lang="scss">
+@media (min-width: 1280px) and (max-width: 1799px) {
+  .dashboard-header { height: auto; min-height: 78px; flex-wrap: wrap; }
+  .main-nav { order: 3; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); width: 100%; flex: 1 0 100%; min-height: 40px; }
+  .nav-item { min-width: 0; padding-right: 6px; padding-left: 6px; font-size: 12px; }
+}
+</style> -->

@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { MODULE_ROUTES_RECORDS } from '@/features/modules/routes'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -36,6 +37,7 @@ const router = createRouter({
       component: () => import('@/views/PlaceholderView.vue'),
       meta: { title: '系统设置' },
     },
+    ...MODULE_ROUTES_RECORDS,
   ],
 })
 

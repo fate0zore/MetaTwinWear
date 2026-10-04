@@ -1,0 +1,30 @@
+@use './tokens' as tokens;
+
+:root {
+  --bg-deep: #{tokens.$bg-deep};
+  --bg-shell: #{tokens.$bg-shell};
+  --panel: #{tokens.$panel};
+  --panel-strong: #{tokens.$panel-strong};
+  --line: #{tokens.$line};
+  --line-soft: #{tokens.$line-soft};
+  --cyan: #{tokens.$cyan};
+  --cyan-soft: #{tokens.$cyan-soft};
+  --blue: #{tokens.$blue};
+  --text: #{tokens.$text};
+  --muted: #{tokens.$muted};
+  --green: #{tokens.$green};
+  --yellow: #{tokens.$yellow};
+  --orange: #{tokens.$orange};
+  --red: #{tokens.$red};
+
+  font-family: tokens.$font-family;
+  color: var(--text);
+  background: var(--bg-deep);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* { box-sizing: border-box; }
+html, body, #app { width: 100%; min-height: 100%; margin: 0; }
+body { min-height: 100vh; min-height: 100dvh; overflow-x: hidden; background: var(--bg-deep); }
+button, input { font: inherit; }

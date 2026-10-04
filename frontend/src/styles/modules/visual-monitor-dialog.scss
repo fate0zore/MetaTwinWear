@@ -1,0 +1,9 @@
+.review-dialog-content { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 16px; align-items: start; }
+.review-image { position: relative; overflow: hidden; border: 1px solid rgba(24, 200, 255, .44); aspect-ratio: 4 / 3; }
+.review-image img { display: block; width: 100%; height: 100%; object-fit: fill; }
+.review-image .detection-box { position: absolute; border: 2px solid #15e3ff; box-shadow: inset 0 0 8px rgba(14, 218, 250, .12); }
+.review-form .el-select, .review-form .el-input-number { width: 100%; }
+.review-form .el-form-item { margin-bottom: 10px; }
+.box-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 10px; }
+.coordinate-note { margin: 0; color: #7ba6b8; font-size: 12px; line-height: 1.5; }
+@media (max-width: 640px) { .review-dialog-content { grid-template-columns: minmax(0, 1fr); }.review-image { width: min(100%, 440px); margin: auto; }.box-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
