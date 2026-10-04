@@ -65,6 +65,7 @@ export function useDashboardApi() {
     try {
       const snapshot = await dashboardApi.control(action)
       store.applySnapshot(snapshot)
+      if (action === 'reset') store.appendLog('监测数据已重置')
       return snapshot
     } catch (error) {
       store.apiError = error instanceof Error ? error.message : '操作失败'

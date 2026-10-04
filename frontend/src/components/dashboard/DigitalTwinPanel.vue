@@ -1,6 +1,6 @@
 <template>
   <DashboardPanel class="digital-twin-panel" title="刀具实时加工数字孪生" :icon="Grid" :no-padding="true">
-    <div class="twin-stage">
+    <div id="twin-stage" ref="twinStageRef" class="twin-stage" :style="twinStageStyle">
       <div class="twin-media">
         <video
           v-if="store.twinVideo.src"
@@ -32,9 +32,9 @@
           @click="togglePlayback"
         >{{ videoState === 'playing' ? '暂停' : '播放' }}</button>
       </div>
-      <div class="twin-badge speed-badge"><span>主轴转速:</span><strong>{{ store.process.spindleSpeed }} rpm</strong><span>进给速度: {{ store.process.feedRate }} mm/min</span></div>
+      <!-- <div class="twin-badge speed-badge"><span>主轴转速:</span><strong>{{ store.process.spindleSpeed }} rpm</strong><span>进给速度: {{ store.process.feedRate }} mm/min</span></div> -->
       <div class="twin-status-card">
-        <h4>刀具实时状态</h4>
+       <h4>刀具实时状态</h4>
         <p><span>刀具状态</span><strong class="status-tag" :class="`wear-stage--${currentWearStage.code}`">{{ currentWearStage.label }}</strong></p>
         <p><span>磨损量 VB</span><b>{{ store.wear.currentWear.toFixed(2) }} mm</b></p>
         <p><span>磨损率</span><b>{{ store.wear.wearRate.toFixed(3) }} mm/min</b></p>
@@ -73,11 +73,30 @@
         </div>
       </div>
     </div>
+    <div
+      class="twin-stage-resizer"
+      role="separator"
+      tabindex="0"
+      aria-orientation="horizontal"
+      aria-controls="twin-stage"
+      aria-label="调整数字孪生视频区高度"
+      :aria-valuemin="stageHeightBounds.min"
+      :aria-valuemax="stageHeightBounds.max"
+      :aria-valuenow="currentStageHeight"
+      :aria-valuetext="manualStageHeight === null ? '自动高度' : `${currentStageHeight} 像素`"
+      title="拖动或使用上下方向键调整高度；按 Enter 恢复自动高度"
+      @pointerdown="startStageResize"
+      @pointermove="moveStageResize"
+      @pointerup="finishStageResize"
+      @pointercancel="finishStageResize"
+      @lostpointercapture="finishStageResize"
+      @keydown="handleStageResizeKeydown"
+    ><span aria-hidden="true"></span></div>
   </DashboardPanel>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { Grid } from '@element-plus/icons-vue'
 import DashboardPanel from './DashboardPanel.vue'
 import { useDashboardStore } from '@/stores/dashboard'
@@ -85,9 +104,52 @@ import { classifyWearStage, wearStageDefinitions } from '@/features/dashboard/we
 
 const store = useDashboardStore()
 const videoRef = ref<HTMLVideoElement | null>(null)
+const twinStageRef = ref<HTMLElement | null>(null)
 const videoState = ref<'loading' | 'ready' | 'playing' | 'paused' | 'waiting' | 'error'>('loading')
+const viewportWidth = ref(typeof window === 'undefined' ? 1280 : window.innerWidth)
+const viewportStageCap = ref<number | null>(null)
+const manualStageHeight = ref<number | null>(null)
+const measuredStageHeight = ref(0)
+let activePointerId: number | null = null
+let dragStartY = 0
+let dragStartHeight = 0
+let stageResizeObserver: ResizeObserver | null = null
+let stageMeasurementFrame = 0
 const wearStages = wearStageDefinitions
 const currentWearStage = computed(() => classifyWearStage(store.wear.currentWear, store.wear.threshold))
+const stageHeightBounds = computed(() => {
+  const width = viewportWidth.value
+  let min: number
+  let max: number
+
+  if (width < 360) {
+    min = 300
+    max = 400
+  } else if (width < 768) {
+    min = 170
+    max = 240
+  } else if (width < 1280) {
+    min = 170
+    max = Math.min(280, Math.max(170, Math.round(width * 0.32)))
+  } else {
+    min = 255
+    max = 560
+  }
+
+  if (viewportStageCap.value !== null) max = Math.min(max, Math.max(min, viewportStageCap.value))
+  return { min, max: Math.max(min, max) }
+})
+const currentStageHeight = computed(() => Math.round(manualStageHeight.value ?? measuredStageHeight.value))
+const twinStageStyle = computed(() => {
+  if (manualStageHeight.value === null) return undefined
+  const height = clampStageHeight(manualStageHeight.value)
+  return {
+    flex: '0 0 auto',
+    height: `${height}px`,
+    maxHeight: `${height}px`,
+    minHeight: `${stageHeightBounds.value.min}px`,
+  }
+})
 const videoStatusText = computed(() => {
   if (!store.twinVideo.src) return '未连接'
   return ({
@@ -101,6 +163,84 @@ const videoStatusText = computed(() => {
 })
 
 watch(() => store.twinVideo.src, () => { videoState.value = 'loading' })
+
+function clampStageHeight(height: number) {
+  return Math.min(stageHeightBounds.value.max, Math.max(stageHeightBounds.value.min, height))
+}
+
+function updateStageMeasurements() {
+  viewportWidth.value = window.innerWidth
+  const stage = twinStageRef.value
+  if (!stage) return
+  measuredStageHeight.value = stage.getBoundingClientRect().height
+  const cap = Number.parseFloat(getComputedStyle(stage).getPropertyValue('--twin-stage-viewport-cap'))
+  viewportStageCap.value = Number.isFinite(cap) && cap > 0 ? cap : null
+  if (manualStageHeight.value !== null) manualStageHeight.value = clampStageHeight(manualStageHeight.value)
+}
+
+function scheduleStageMeasurements() {
+  cancelAnimationFrame(stageMeasurementFrame)
+  stageMeasurementFrame = requestAnimationFrame(updateStageMeasurements)
+}
+
+onMounted(() => {
+  updateStageMeasurements()
+  if (twinStageRef.value) {
+    stageResizeObserver = new ResizeObserver(updateStageMeasurements)
+    stageResizeObserver.observe(twinStageRef.value)
+  }
+  window.addEventListener('resize', scheduleStageMeasurements)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', scheduleStageMeasurements)
+  cancelAnimationFrame(stageMeasurementFrame)
+  stageResizeObserver?.disconnect()
+})
+
+function startStageResize(event: PointerEvent) {
+  if (event.button !== 0 || !twinStageRef.value) return
+  updateStageMeasurements()
+  const handle = event.currentTarget as HTMLElement
+  activePointerId = event.pointerId
+  dragStartY = event.clientY
+  dragStartHeight = clampStageHeight(twinStageRef.value.getBoundingClientRect().height)
+  manualStageHeight.value = dragStartHeight
+  handle.setPointerCapture(event.pointerId)
+  event.preventDefault()
+}
+
+function moveStageResize(event: PointerEvent) {
+  if (activePointerId !== event.pointerId) return
+  manualStageHeight.value = clampStageHeight(dragStartHeight + event.clientY - dragStartY)
+}
+
+function finishStageResize(event: PointerEvent) {
+  if (activePointerId !== event.pointerId) return
+  activePointerId = null
+  const handle = event.currentTarget as HTMLElement
+  if (handle.hasPointerCapture(event.pointerId)) handle.releasePointerCapture(event.pointerId)
+}
+
+function handleStageResizeKeydown(event: KeyboardEvent) {
+  const current = manualStageHeight.value ?? twinStageRef.value?.getBoundingClientRect().height ?? measuredStageHeight.value
+  let next: number | null = null
+
+  if (event.key === 'ArrowUp') next = current - 16
+  else if (event.key === 'ArrowDown') next = current + 16
+  else if (event.key === 'Home') next = stageHeightBounds.value.min
+  else if (event.key === 'End') next = stageHeightBounds.value.max
+  else if (event.key === 'Enter') {
+    manualStageHeight.value = null
+    event.preventDefault()
+    return
+  }
+
+  if (next !== null) {
+    manualStageHeight.value = clampStageHeight(next)
+    event.preventDefault()
+  }
+}
 
 async function togglePlayback() {
   const video = videoRef.value

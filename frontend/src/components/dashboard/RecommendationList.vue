@@ -1,5 +1,5 @@
 <template>
-  <DashboardPanel title="刀具后续工作建议" :icon="List">
+  <DashboardPanel title="智能体检测" :icon="List">
     <div class="recommendation-list">
       <div v-for="item in recommendations" :key="item.label" class="recommendation-item" :class="[`tone-${item.tone}`, `recommendation-kind-${item.kind}`]">
         <div class="recommendation-icon"><el-icon><component :is="item.icon" /></el-icon></div>
@@ -29,8 +29,15 @@ const mockRecommendations = computed(() => [
   { icon: Aim, label: '建议监测参数', value: '主轴振动、切削力', tone: 'info' },
 ])
 const recommendationIcons = [Aim, WarningFilled, Clock, Odometer, Clock, Aim]
-const recommendationKinds = ['status', 'risk', 'metric', 'advice', 'metric', 'metric'] as const
-const recommendations = computed(() => store.dataSource === 'api'
-  ? store.serverRecommendations.map((item, index) => ({ ...item, icon: recommendationIcons[index] ?? Aim, kind: recommendationKinds[index] ?? 'metric' }))
-  : mockRecommendations.value.map((item, index) => ({ ...item, kind: recommendationKinds[index] ?? 'metric' })))
+const recommendationKinds = ['status', 'risk', 'metric', 'advice', 'metric', 'monitoring-params'] as const
+const recommendations = computed(() => {
+  const items = store.dataSource === 'api'
+    ? store.serverRecommendations.map((item, index) => ({ ...item, icon: recommendationIcons[index] ?? Aim, kind: recommendationKinds[index] ?? 'metric' }))
+    : mockRecommendations.value.map((item, index) => ({ ...item, kind: recommendationKinds[index] ?? 'metric' }))
+
+  return [
+    ...items.filter((item) => item.kind !== 'advice'),
+    ...items.filter((item) => item.kind === 'advice'),
+  ]
+})
 </script>

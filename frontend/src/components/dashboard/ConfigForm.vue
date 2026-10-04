@@ -127,6 +127,24 @@
       </div>
     </div>
 
+    <div class="tool-preview-card">
+      <div class="tool-photo" :class="{ 'reference-crop': store.dataSource === 'mock', 'tool-catalog-image': store.dataSource === 'api' }" :style="store.dataSource === 'mock' ? referenceStyle : undefined">
+        <img
+          v-if="store.dataSource === 'api' && selectedTool && !imageFailed"
+          :key="selectedTool.imageUrl"
+          :src="selectedTool.imageUrl"
+          :alt="`${selectedTool.model} 刀具主图`"
+          @error="imageFailed = true"
+        >
+        <span v-else-if="store.dataSource === 'api'" class="tool-image-feedback" role="img" aria-label="刀具图片暂不可用">刀具图片暂不可用</span>
+      </div>
+      <div class="tool-preview-copy">
+        <strong>{{ store.tool.model }}</strong>
+        <span>{{ store.tool.material }} · {{ store.tool.toothCount }} 齿</span>
+        <small v-if="store.dataSource === 'api' && selectedTool">{{ selectedTool.description }}</small>
+      </div>
+    </div>
+
     <div class="device-meta-grid">
       <div><span>数据来源</span><strong>{{ store.dataSource === 'api' ? '后端模拟器' : '本地模拟器' }}</strong></div>
       <div><span>采样频率</span><strong>1 Hz</strong></div>
@@ -136,45 +154,24 @@
 
     <div v-if="store.dataSource === 'api' && store.apiError" role="alert" class="api-status-message">{{ store.apiError }}</div>
     <div class="monitor-actions">
-      <el-button type="primary" class="start-button" :disabled="store.dataSource === 'api' && store.apiConnection !== 'connected'" @click="emit('toggle')">
-        <el-icon><VideoPlay /></el-icon>{{ store.monitoring ? '停止监听' : '开始监听' }}
-      </el-button>
-      <el-button class="reset-button" :disabled="store.dataSource === 'api' && store.apiConnection !== 'connected'" @click="handleReset"><el-icon><Refresh /></el-icon>重置</el-button>
       <el-button v-if="store.dataSource === 'api' && store.apiConnection === 'disconnected'" @click="emit('retry')">重连</el-button>
     </div>
 
     <slot name="process-replacement" />
   </DashboardPanel>
 
-  <div class="tool-preview-card">
-    <div class="tool-photo" :class="{ 'reference-crop': store.dataSource === 'mock', 'tool-catalog-image': store.dataSource === 'api' }" :style="store.dataSource === 'mock' ? referenceStyle : undefined">
-      <img
-        v-if="store.dataSource === 'api' && selectedTool && !imageFailed"
-        :key="selectedTool.imageUrl"
-        :src="selectedTool.imageUrl"
-        :alt="`${selectedTool.model} 刀具主图`"
-        @error="imageFailed = true"
-      >
-      <span v-else-if="store.dataSource === 'api'" class="tool-image-feedback" role="img" aria-label="刀具图片暂不可用">刀具图片暂不可用</span>
-    </div>
-    <div class="tool-preview-copy">
-      <strong>{{ store.tool.model }}</strong>
-      <span>{{ store.tool.material }} · {{ store.tool.toothCount }} 齿</span>
-      <small v-if="store.dataSource === 'api' && selectedTool">{{ selectedTool.description }}</small>
-    </div>
-  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Aim, Box, Refresh, Tools, VideoPlay } from '@element-plus/icons-vue'
+import { Aim, Box, Tools } from '@element-plus/icons-vue'
 
 import referenceDesign from '@/assets/dashboard/reference-design.png'
 import DashboardPanel from './DashboardPanel.vue'
 import { normalizeWorkpieceSize } from '@/features/dashboard/workpieceDimensions'
 import { useDashboardStore } from '@/stores/dashboard'
 
-const emit = defineEmits<{ toggle: []; reset: []; retry: []; configurationChange: [] }>()
+const emit = defineEmits<{ retry: []; configurationChange: [] }>()
 const store = useDashboardStore()
 const referenceStyle = computed(() => ({ backgroundImage: `url(${referenceDesign})` }))
 const lastUpdated = computed(() => store.dataSource === 'api' && store.sampledAt
@@ -237,9 +234,10 @@ function handleWorkpieceMaterialChange(value: string) {
   emit('configurationChange')
 }
 
-function handleReset() {
+function clearValidationErrors() {
   workpieceSizeError.value = ''
   workpieceMaterialError.value = ''
-  emit('reset')
 }
+
+defineExpose({ clearValidationErrors })
 </script>

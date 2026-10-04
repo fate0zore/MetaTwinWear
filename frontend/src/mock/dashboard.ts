@@ -1,4 +1,4 @@
-import type { ConfigurationOptions, DashboardState, ProcessSample, SensorSeries, SignalChannel, TimePoint } from '@/types/dashboard'
+import type { ConfigurationOptions, DashboardState, MonitoringStatistics, ProcessSample, SensorSeries, SignalChannel, TimePoint } from '@/types/dashboard'
 import { classifyWearStage } from '@/features/dashboard/wearStages'
 import machiningVideo from '@/assets/dashboard/数控铣床用可转位刀具粗切削注射模镶件.mp4'
 
@@ -13,6 +13,14 @@ export const mockConfigurationOptions: ConfigurationOptions = {
   materials: ['硬质合金', '高速钢', '陶瓷合金'],
   workpieceSizes: ['80 × 60 × 40', '120 × 80 × 50', '160 × 100 × 60'],
   workpieceMaterials: ['镍基高温合金 (Inconel 718)', '钛合金 (TC4)', '铝合金 (7075)', '模具钢 (S136)'],
+}
+
+export const mockMonitoringStatistics: MonitoringStatistics = {
+  machiningDurationSeconds: 9378,
+  samplingFrequencyHz: 1,
+  alarmCount: 12,
+  correctRecognitionCount: 11,
+  averageMonitoringErrorMicrometers: 8,
 }
 
 const timeLabel = (index: number) => `${String(Math.floor(index / 2)).padStart(2, '0')}:${String((index % 2) * 30).padStart(2, '0')}`
@@ -77,11 +85,13 @@ export const initialDashboardState: DashboardState = {
     stage: initialWearStage.label,
     status: initialWearStage.status,
   },
+  monitoringStatistics: mockMonitoringStatistics,
   twinVideo: {
     src: machiningVideo,
     label: '模拟视频流',
   },
   monitoring: false,
+  logs: [],
   alertVisible: false,
   signals: [
     {

@@ -1,6 +1,70 @@
 <template>
   <div class="app-shell flex min-h-dvh flex-col">
     <DashboardHeader />
+    <section class="monitor-summary monitor-overview w-full min-w-0 px-2 py-2 md:px-2.5 xl:px-[7px] min-[1541px]:px-[11px]" aria-label="监控统计与工艺参数监听，Mock 演示数据">
+      <div class="monitor-overview-card">
+        <!-- 暂时不需要title -->
+        <!-- <div class="monitor-summary-header">
+          <div class="monitor-summary-title"><span class="heading-mark"></span><span>加工与监测统计</span></div>
+          <el-tag class="monitor-summary-tag" size="small" effect="dark">Mock 演示</el-tag>
+        </div> -->
+        <div class="monitor-summary-grid" :style="{ '--summary-columns': summaryColumns }">
+          <div v-for="item in summaryItems" :key="item.label" class="monitor-summary-item">
+            <el-icon :size="20" class="monitor-summary-icon" :class="`is-${item.tone}`" aria-hidden="true">
+              <component :is="item.icon" />
+            </el-icon>
+            <div class="monitor-summary-copy">
+              <div class="monitor-summary-label">{{ item.label }}</div>
+              <div class="monitor-summary-value"><strong>{{ item.value }}</strong><span v-if="item.unit">{{ item.unit }}</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="process-monitor-card">
+          <div class="process-monitor-grid">
+            <div v-for="item in processParameterItems" :key="item.label" class="monitor-summary-item">
+              <el-icon :size="20" class="monitor-summary-icon" :class="`is-${item.tone}`" aria-hidden="true">
+                <component :is="item.icon" />
+              </el-icon>
+              <div class="monitor-summary-copy">
+                <div class="monitor-summary-label">{{ item.label }}</div>
+                <div class="monitor-summary-value">
+                  <strong :class="{ 'is-pending': !store.monitoring }">{{ store.monitoring ? item.value : '待监听' }}</strong>
+                  <span v-if="store.monitoring">{{ item.unit }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="process-monitor-status-tile">
+              <div class="process-monitor-status" :class="`is-${machineConnectionStatus.tone}`">
+                <i aria-hidden="true"></i>
+                <span>机床/传感器通讯</span>
+                <strong>{{ machineConnectionStatus.label }}</strong>
+              </div>
+              <div class="process-monitor-status" :class="store.monitoring ? 'is-active' : 'is-idle'">
+                <i aria-hidden="true"></i>
+                <span>{{ store.monitoring ? '实时采集中' : '等待监听' }}</span>
+              </div>
+            </div>
+            <div class="process-monitor-action">
+              <el-button
+                type="primary"
+                class="process-monitor-toggle"
+                :disabled="store.dataSource === 'api' && store.apiConnection !== 'connected'"
+                @click="toggleMonitoring"
+              >
+                <el-icon><VideoPlay /></el-icon>{{ store.monitoring ? '停止监听' : '开始监听' }}
+              </el-button>
+              <el-button
+                class="reset-button"
+                :disabled="store.dataSource === 'api' && store.apiConnection !== 'connected'"
+                @click="resetMonitoring"
+              >
+                <el-icon><Refresh /></el-icon>重置
+              </el-button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
     <!-- API 尚未就绪时显示连接状态，并在断开后提供重试入口。 -->
     <div v-if="store.dataSource === 'api' && !store.apiReady" class="api-loading-state" role="status">
       <p>{{ store.apiError || '正在连接后端监控服务…' }}</p>
@@ -42,14 +106,16 @@
           </el-collapse>
         </div>
         <DigitalTwinPanel />
-        <ProcessParameterChart />
+        <!-- 暂时隐藏设备工艺监听 -->
+        <!-- <ProcessParameterChart /> -->
+        <WearEvolutionPanel class="left-wear-evolution" />
       </section>
 
       <!-- 左栏集中放置加工配置表单，并通过插槽展示刀具磨损演化。 -->
       <aside id="dashboard-left-column" ref="leftColumnRef" class="left-rail flex min-w-0 flex-col gap-2.5 md:col-start-1 md:row-start-1 md:h-full xl:col-start-1">
-        <ConfigForm @toggle="toggleMonitoring" @reset="resetMonitoring" @retry="connectApi" @configuration-change="saveConfiguration">
+        <ConfigForm ref="configFormRef" @retry="connectApi" @configuration-change="saveConfiguration">
           <template #process-replacement>
-            <WearEvolutionPanel class="left-wear-evolution" />
+            <!-- <WearEvolutionPanel class="left-wear-evolution" /> -->
           </template>
         </ConfigForm>
       </aside>
@@ -57,11 +123,12 @@
       <!-- 右栏汇总磨损预测、当前状态和维护建议；平板下预测卡跨两行。 -->
       <aside id="dashboard-right-column" ref="rightColumnRef" class="right-rail flex min-w-0 flex-col gap-2.5 md:col-span-2 md:row-start-2 md:grid md:grid-cols-[minmax(0,1.25fr)_minmax(240px,1fr)] md:items-stretch xl:col-span-1 xl:col-start-5 xl:row-start-1 xl:flex xl:h-full">
         <PredictionChart class="md:col-start-1 md:row-span-2 xl:col-auto xl:row-auto" />
-        <div class="right-status-card md:col-start-2 xl:col-auto">
+        <!-- <div class="right-status-card md:col-start-2 xl:col-auto">
           <div class="status-metrics"><div><span>当前磨损</span><strong>VB = {{ store.wear.currentWear.toFixed(2) }} mm</strong></div><div><span>磨损阈值</span><strong>VB = {{ store.wear.threshold.toFixed(2) }} mm</strong></div><div><span>预计剩余寿命</span><strong class="gold-text">{{ store.wear.remainingLife.toFixed(1) }} min</strong></div></div>
           <div class="big-status" :class="`wear-stage--${currentWearStage.code}`"><span class="big-status-dot"></span><span>状态</span><strong>{{ currentWearStage.label }}</strong></div>
-        </div>
+        </div> -->
         <RecommendationList class="md:col-start-2 xl:col-auto" />
+        <AgentLogPanel class="md:col-start-2 xl:col-auto" />
       </aside>
 
       <!-- 桌面分隔条支持指针拖动、方向键微调和恢复默认列宽。 -->
@@ -117,7 +184,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { DataLine, Grid, TrendCharts } from '@element-plus/icons-vue'
+import { Aim, CircleCheck, Clock, DataLine, Grid, Odometer, Refresh, TrendCharts, VideoPlay, WarningFilled } from '@element-plus/icons-vue'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useDashboardMock } from '@/composables/useDashboardMock'
 import { useDashboardApi } from '@/features/dashboard/composables/useDashboardApi'
@@ -130,9 +197,85 @@ import ProcessParameterChart from '@/components/dashboard/ProcessParameterChart.
 import WearEvolutionPanel from '@/components/dashboard/WearEvolutionPanel.vue'
 import PredictionChart from '@/components/dashboard/PredictionChart.vue'
 import RecommendationList from '@/components/dashboard/RecommendationList.vue'
+import AgentLogPanel from '@/components/dashboard/AgentLogPanel.vue'
 import AlertPanel from '@/components/dashboard/AlertPanel.vue'
 
 const store = useDashboardStore()
+const configFormRef = ref<InstanceType<typeof ConfigForm> | null>(null)
+const summaryColumns = ref(5)
+const summaryItems = computed(() => [
+  {
+    label: '加工时长',
+    value: formatDuration(store.monitoringStatistics.machiningDurationSeconds),
+    unit: '',
+    icon: Clock,
+    tone: 'time',
+  },
+  {
+    label: '采样频率',
+    value: String(store.monitoringStatistics.samplingFrequencyHz),
+    unit: 'Hz',
+    icon: DataLine,
+    tone: 'success',
+  },
+  {
+    label: '报警次数',
+    value: String(store.monitoringStatistics.alarmCount),
+    unit: '次',
+    icon: WarningFilled,
+    tone: 'warning',
+  },
+  {
+    label: '正确识别次数',
+    value: String(store.monitoringStatistics.correctRecognitionCount),
+    unit: '次',
+    icon: CircleCheck,
+    tone: 'success',
+  },
+  {
+    label: '平均状态监测误差',
+    value: String(store.monitoringStatistics.averageMonitoringErrorMicrometers),
+    unit: 'μm',
+    icon: Aim,
+    tone: 'error',
+  },
+])
+const processParameterItems = computed(() => [
+  {
+    label: '主轴转速',
+    value: String(store.process.spindleSpeed),
+    unit: 'rpm',
+    icon: Odometer,
+    tone: 'time',
+  },
+  {
+    label: '进给速度',
+    value: String(store.process.feedRate),
+    unit: 'mm/min',
+    icon: TrendCharts,
+    tone: 'success',
+  },
+  {
+    label: '切削深度',
+    value: store.process.cuttingDepth.toFixed(1),
+    unit: 'mm',
+    icon: Aim,
+    tone: 'warning',
+  },
+  {
+    label: '切削宽度',
+    value: store.process.cuttingWidth.toFixed(1),
+    unit: 'mm',
+    icon: Grid,
+    tone: 'error',
+  },
+])
+const machineConnectionStatus = computed(() => {
+  if (store.dataSource === 'mock') return { label: '本地模拟', tone: 'success' }
+  if (store.apiConnection === 'connected') return { label: '已连接', tone: 'success' }
+  if (store.apiConnection === 'loading') return { label: '连接中', tone: 'loading' }
+  return { label: '连接中断', tone: 'error' }
+})
 const currentWearStage = computed(() => classifyWearStage(store.wear.currentWear, store.wear.threshold))
 const mock = useDashboardMock()
 const api = useDashboardApi()
@@ -143,6 +286,7 @@ const toggleMonitoring = () => {
   else mock.start()
 }
 const resetMonitoring = () => {
+  configFormRef.value?.clearValidationErrors()
   if (store.dataSource === 'api') {
     void api.control('reset').then((snapshot) => {
       if (snapshot) store.resetLocalConfiguration(snapshot.tool, snapshot.workpiece)
@@ -490,9 +634,21 @@ watch(dashboardGridRef, (grid, previousGrid) => {
 }, { flush: 'post' })
 
 function handleWindowResize() {
+  updateSummaryColumns()
   cancelActiveColumnResize()
   syncColumnWidthsForViewport()
   scheduleLayout()
+}
+
+function updateSummaryColumns() {
+  summaryColumns.value = window.innerWidth < 768 ? 1 : window.innerWidth < 1280 ? 3 : 5
+}
+
+function formatDuration(totalSeconds: number): string {
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  return [hours, minutes, seconds].map((part) => String(part).padStart(2, '0')).join(':')
 }
 
 function updateTwinStageCap() {
@@ -510,9 +666,9 @@ function updateTwinStageCap() {
     : expandedProcessHeight
   const available = window.innerHeight - twin.getBoundingClientRect().top
     - twinHeading.getBoundingClientRect().height - 10 - processHeight - 9
-  const minimumStageHeight = isCompactDesktop ? 180 : 275
+  const minimumStageHeight = isCompactDesktop ? 170 : 255
   center.style.setProperty('--process-panel-viewport-height', `${expandedProcessHeight}px`)
-  center.style.setProperty('--twin-stage-viewport-cap', `${Math.max(minimumStageHeight, Math.floor(available))}px`)
+  center.style.setProperty('--twin-stage-viewport-cap', `${Math.max(minimumStageHeight, Math.floor(available) - 24)}px`)
 }
 
 function getSignalGridHeight(grid: HTMLElement): number {
@@ -555,7 +711,7 @@ function updateAutomaticLayout() {
     const gridMargin = parseFloat(getComputedStyle(grid).marginTop) || 0
     const minimumStage = window.innerWidth < 1280
       ? stage.getBoundingClientRect().height
-      : parseFloat(getComputedStyle(stage).minHeight) || 275
+      : parseFloat(getComputedStyle(stage).minHeight) || 255
     const requiredBottom = section.getBoundingClientRect().top
       + heading.getBoundingClientRect().height + gridMargin + getSignalGridHeight(grid)
       + columnGap + twinHeading.getBoundingClientRect().height
@@ -583,6 +739,7 @@ onMounted(() => {
   }
   if (dashboardGridRef.value) columnResizeObserver.observe(dashboardGridRef.value)
   window.addEventListener('resize', handleWindowResize)
+  updateSummaryColumns()
   syncColumnWidthsForViewport()
   updateAutomaticLayout()
 })

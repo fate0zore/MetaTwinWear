@@ -8,6 +8,32 @@ import { normalizeWorkpieceSize } from '@/features/dashboard/workpieceDimensions
 const nextPoint = (lastValue: number, index: number, drift = 0, amplitude = 1): number =>
   Number((lastValue + Math.sin(index * 1.27) * amplitude * 0.48 + (Math.random() - 0.5) * amplitude + drift).toFixed(2))
 
+let dashboardLogSequence = 0
+
+const wearStatusLabel = (status: DashboardState['wear']['status']) =>
+  status === 'danger' ? '高风险' : status === 'warning' ? '较高风险' : '正常'
+
+const currentSuggestion = (state: DashboardState) => {
+  const serverSuggestion = state.serverRecommendations.find((item) => item.label.includes('建议'))?.value.trim()
+  if (serverSuggestion) return serverSuggestion
+  if (state.wear.status === 'danger') return '建议立即停止加工并更换刀具'
+  if (state.wear.status === 'warning') return '建议降低切削负荷并持续关注磨损变化'
+  return state.monitoring ? '持续监测刀具磨损、振动与切削力变化' : '启动监测后继续采集数据'
+}
+
+const adviceSignature = (recommendations: DashboardState['serverRecommendations']) => JSON.stringify(
+  recommendations
+    .filter((item) => item.label.includes('建议'))
+    .map(({ label, value }) => ({ label, value })),
+)
+
+const formatLogTime = () => {
+  const now = new Date()
+  return [now.getHours(), now.getMinutes(), now.getSeconds()]
+    .map((part) => String(part).padStart(2, '0'))
+    .join(':')
+}
+
 const pushPoint = (points: TimePoint[], value: number) => {
   points.push({ time: new Date().toLocaleTimeString('zh-CN', { minute: '2-digit', second: '2-digit' }), value })
   if (points.length > 42) points.shift()
@@ -96,6 +122,12 @@ export const useDashboardStore = defineStore('dashboard', {
   state: (): DashboardState => cloneDashboardState(),
   actions: {
     applySnapshot(snapshot: ApiSnapshot) {
+      const shouldTrackChanges = this.apiReady
+      const previousMonitoring = this.monitoring
+      const previousWear = { stage: this.wear.stage, status: this.wear.status }
+      const previousAlert = this.activeAlert ? `${this.activeAlert.id}:${this.activeAlert.message}` : ''
+      const previousAdvice = adviceSignature(this.serverRecommendations)
+
       this.process = snapshot.process
       this.wear = snapshot.wear
       this.monitoring = snapshot.monitoring
@@ -134,6 +166,34 @@ export const useDashboardStore = defineStore('dashboard', {
       this.apiReady = true
       this.apiConnection = 'connected'
       this.apiError = ''
+
+      if (!shouldTrackChanges) return
+
+      if (previousMonitoring !== snapshot.monitoring) {
+        this.appendLog(
+          snapshot.monitoring ? '监测已开始' : '监测已停止',
+          snapshot.monitoring ? '持续监测刀具磨损与加工状态' : '重新启动监测以恢复实时判断',
+        )
+      }
+
+      if (previousWear.stage !== snapshot.wear.stage || previousWear.status !== snapshot.wear.status) {
+        const previousState = `${previousWear.stage}（${wearStatusLabel(previousWear.status)}）`
+        const nextState = `${snapshot.wear.stage}（${wearStatusLabel(snapshot.wear.status)}）`
+        this.appendLog(`刀具状态由${previousState}变化为${nextState}`)
+      }
+
+      const nextAlert = snapshot.activeAlert ? `${snapshot.activeAlert.id}:${snapshot.activeAlert.message}` : ''
+      if (previousAlert !== nextAlert) {
+        this.appendLog(
+          snapshot.activeAlert ? `磨损预警已触发：${snapshot.activeAlert.message}` : '当前磨损预警已解除',
+          snapshot.activeAlert ? '建议检查刀具磨损，并按预警建议调整加工参数' : '继续监测磨损趋势与加工状态',
+        )
+      }
+
+      const nextAdvice = adviceSignature(snapshot.recommendations)
+      if (previousAdvice !== nextAdvice && nextAdvice !== '[]') {
+        this.appendLog(`智能体建议已更新：${snapshot.recommendations.filter((item) => item.label.includes('建议')).map((item) => item.value).join('；')}`)
+      }
     },
     initializeLocalConfiguration(defaultTool: ToolConfig, defaultWorkpiece: WorkpieceConfig) {
       if (this.configurationInitialized) return
@@ -202,6 +262,7 @@ export const useDashboardStore = defineStore('dashboard', {
       return true
     },
     dismissAlert() {
+      const wasVisible = this.alertVisible
       this.dismissedAlertId = this.activeAlert?.id ?? null
       if (this.dataSource === 'api' && this.dismissedAlertId) {
         try {
@@ -211,16 +272,33 @@ export const useDashboardStore = defineStore('dashboard', {
         }
       }
       this.alertVisible = false
+      if (wasVisible) this.appendLog('磨损预警已确认')
     },
     setMonitoring(value: boolean) {
+      if (this.monitoring === value) return
       this.monitoring = value
+      this.appendLog(
+        value ? '监测已开始' : '监测已停止',
+        value ? '持续监测刀具磨损与加工状态' : '重新启动监测以恢复实时判断',
+      )
+    },
+    appendLog(event: string, recommendation?: string) {
+      this.logs.unshift({
+        id: `dashboard-log-${Date.now()}-${dashboardLogSequence++}`,
+        time: formatLogTime(),
+        event,
+        recommendation: recommendation ?? currentSuggestion(this.$state),
+      })
     },
     reset() {
-      Object.assign(this, cloneDashboardState())
+      const sessionLogs = [...this.logs]
+      Object.assign(this, cloneDashboardState(), { logs: sessionLogs })
       this.configurationInitialized = true
       this.persistLocalConfiguration()
+      this.appendLog('监测数据已重置')
     },
     tick() {
+      const previousWear = { stage: this.wear.stage, status: this.wear.status }
       const index = this.wearHistory.length
       this.signals.forEach((signal) => updateSignal(signal, index))
 
@@ -255,7 +333,19 @@ export const useDashboardStore = defineStore('dashboard', {
       const wearStage = classifyWearStage(nextWear, this.wear.threshold)
       this.wear.status = wearStage.status
       this.wear.stage = wearStage.label
-      if (this.wear.status === 'danger') this.alertVisible = true
+
+      if (previousWear.stage !== this.wear.stage || previousWear.status !== this.wear.status) {
+        this.appendLog(
+          `刀具状态由${previousWear.stage}（${wearStatusLabel(previousWear.status)}）变化为${this.wear.stage}（${wearStatusLabel(this.wear.status)}）`,
+        )
+      }
+      if (previousWear.status !== this.wear.status && this.wear.status === 'danger') {
+        this.alertVisible = true
+        this.appendLog('磨损预警已触发', '建议检查刀具磨损，并按预警建议调整加工参数')
+      } else if (previousWear.status === 'danger' && this.wear.status !== 'danger') {
+        this.alertVisible = false
+        this.appendLog('当前磨损预警已解除', '继续监测磨损趋势与加工状态')
+      }
     },
   },
 })

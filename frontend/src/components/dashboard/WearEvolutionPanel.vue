@@ -5,43 +5,47 @@
       <strong :class="`wear-stage--${currentWearStage.code}`">窗口：6 · 当前阶段：{{ currentWearStage.label }}</strong>
     </div>
 
-    <div class="wear-sampling-strip" role="list" aria-label="历史磨损采样">
-      <button
-        v-for="sample in samples"
-        :key="sample.id"
-        type="button"
-        class="wear-sample-card"
-        :class="{ 'is-active': selectedSample.id === sample.id }"
-        :aria-label="`${sample.time}，磨损 ${sample.wear.toFixed(2)} mm`"
-        @mouseenter="selectSample(sample)"
-        @focus="selectSample(sample)"
-      >
-        <span class="wear-sample-thumb" :style="getSampleImageStyle(sample)"></span>
-        <span class="wear-sample-time">{{ sample.time }}</span>
-        <strong>{{ sample.wear.toFixed(2) }} mm</strong>
-      </button>
-    </div>
-
-    <div class="wear-detail-view">
-      <button
-        ref="detailImageRef"
-        type="button"
-        class="wear-detail-image"
-        :style="getSampleImageStyle(selectedSample)"
-        :aria-label="`查看完整磨损图像，采样时间 ${selectedSample.time}，磨损 ${selectedSample.wear.toFixed(2)} mm`"
-        title="点击放大查看"
-        @click="openPreview"
-      ></button>
-      <div class="wear-detail-caption">
-        <span>完整磨损图像</span>
-        <small>采样时间：{{ selectedSample.time }}</small>
+    <div class="wear-evolution-content">
+      <div class="wear-sampling-strip" role="list" aria-label="历史磨损采样">
+        <button
+          v-for="sample in samples"
+          :key="sample.id"
+          type="button"
+          class="wear-sample-card"
+          :class="{ 'is-active': selectedSample.id === sample.id }"
+          :aria-label="`${sample.time}，磨损 ${sample.wear.toFixed(2)} mm`"
+          @mouseenter="selectSample(sample)"
+          @focus="selectSample(sample)"
+        >
+          <span class="wear-sample-thumb" :style="getSampleImageStyle(sample)"></span>
+          <span class="wear-sample-time">{{ sample.time }}</span>
+          <strong>{{ sample.wear.toFixed(2) }} mm</strong>
+        </button>
       </div>
-    </div>
 
-    <div class="wear-current-info">
-      <span>当前磨损</span>
-      <strong>{{ selectedSample.wear.toFixed(2) }} mm</strong>
-      <small>悬停上方缩略图查看对应采样</small>
+      <div class="wear-detail-column">
+        <div class="wear-detail-view">
+          <button
+            ref="detailImageRef"
+            type="button"
+            class="wear-detail-image"
+            :style="getSampleImageStyle(selectedSample)"
+            :aria-label="`查看完整磨损图像，采样时间 ${selectedSample.time}，磨损 ${selectedSample.wear.toFixed(2)} mm`"
+            title="点击放大查看"
+            @click="openPreview"
+          ></button>
+          <div class="wear-detail-caption">
+            <span>完整磨损图像</span>
+            <small>采样时间：{{ selectedSample.time }}</small>
+          </div>
+        </div>
+
+        <div class="wear-current-info">
+          <span>当前磨损</span>
+          <strong>{{ selectedSample.wear.toFixed(2) }} mm</strong>
+          <small>悬停上方缩略图查看对应采样</small>
+        </div>
+      </div>
     </div>
   </DashboardPanel>
 

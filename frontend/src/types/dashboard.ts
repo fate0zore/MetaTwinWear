@@ -69,6 +69,21 @@ export interface WearState {
   status: WearStatus
 }
 
+export interface DashboardLog {
+  id: string
+  time: string
+  event: string
+  recommendation: string
+}
+
+export interface MonitoringStatistics {
+  machiningDurationSeconds: number
+  samplingFrequencyHz: number
+  alarmCount: number
+  correctRecognitionCount: number
+  averageMonitoringErrorMicrometers: number
+}
+
 export interface TwinVideoStream {
   src: string
   label: string
@@ -86,8 +101,10 @@ export interface DashboardState {
   process: ProcessParams
   workpiece: WorkpieceConfig
   wear: WearState
+  monitoringStatistics: MonitoringStatistics
   twinVideo: TwinVideoStream
   monitoring: boolean
+  logs: DashboardLog[]
   alertVisible: boolean
   signals: SensorSeries[]
   wearHistory: TimePoint[]
