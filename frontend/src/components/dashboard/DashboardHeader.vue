@@ -24,8 +24,27 @@
     </nav>
 
     <div class="header-status">
-      <span class="online-dot"></span>
-      <span>{{ store.dataSource === 'api' ? store.apiConnection === 'connected' ? '后端已连接' : '后端连接中断' : '本地模拟' }}</span>
+      <span class="online-dot" aria-hidden="true"></span>
+      <el-select
+        v-model="selectedMachineId"
+        class="machine-instance-select"
+        size="small"
+        aria-label="选择在线机床实例"
+        :teleported="false"
+      >
+        <el-option
+          v-for="instance in mockOnlineMachineInstances"
+          :key="instance.id"
+          :label="instance.label"
+          :value="instance.id"
+        >
+          <div class="machine-instance-option">
+            <span class="machine-instance-option-dot" aria-hidden="true"></span>
+            <span>{{ instance.label }}</span>
+            <span class="machine-instance-online">在线</span>
+          </div>
+        </el-option>
+      </el-select>
       <span class="header-divider"></span>
       <span class="header-date">{{ currentTime }}</span>
       <el-icon class="header-action"><Bell /></el-icon>
@@ -35,17 +54,41 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { Aim, Bell, Box, Clock, DataAnalysis, Monitor, Scissor, Setting, Warning } from '@element-plus/icons-vue'
 import swjtuCrest from '@/assets/dashboard/swjtu-crest.png'
-import { useDashboardStore } from '@/stores/dashboard'
 import { MODULE_ROUTES } from '@/features/modules/routes'
 
 const route = useRoute()
-const store = useDashboardStore()
 const now = ref(new Date())
 let timer: number | undefined
+
+// Mock machine instances used by the header selector.
+const mockOnlineMachineInstances = [
+  { id: 'cnc-01', label: '机床 01 · 五轴加工中心' },
+  { id: 'cnc-02', label: '机床 02 · 立式加工中心' },
+  { id: 'cnc-03', label: '机床 03 · 数控车床' },
+]
+const selectedMachineId = ref(mockOnlineMachineInstances[0].id)
+const selectedMachineStorageKey = 'metatwinwear.selectedMachineInstance'
+
+try {
+  const savedMachineId = window.localStorage.getItem(selectedMachineStorageKey)
+  if (savedMachineId && mockOnlineMachineInstances.some((instance) => instance.id === savedMachineId)) {
+    selectedMachineId.value = savedMachineId
+  }
+} catch {
+  // The selector remains usable if browser storage is unavailable.
+}
+
+watch(selectedMachineId, (machineId) => {
+  try {
+    window.localStorage.setItem(selectedMachineStorageKey, machineId)
+  } catch {
+    // Keep the current selection in memory if browser storage is unavailable.
+  }
+})
 
 const currentTime = computed(() => now.value.toLocaleString('zh-CN', {
   year: 'numeric',
