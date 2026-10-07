@@ -83,17 +83,24 @@
       </section>
     </main>
 
-    <el-dialog v-model="reviewVisible" title="校对检测结果" width="min(620px, calc(100vw - 26px))" append-to-body>
+    <el-dialog v-model="reviewVisible" title="校对检测结果" width="min(720px, calc(100vw - 26px))" append-to-body destroy-on-close>
       <div v-if="state.selectedSample.value" class="review-dialog-content">
-        <div class="review-image"><img :src="state.selectedSample.value.imageUrl" :alt="`${state.selectedSample.value.id}校对预览`" /><div class="detection-box" :style="boxStyle(reviewForm.box)"></div></div>
+        <DetectionBoxEditor
+          v-if="reviewDetection"
+          :key="state.selectedSample.value.id"
+          v-model:box="reviewForm.box"
+          :image-url="state.selectedSample.value.imageUrl"
+          :disabled="state.actionPending.value"
+          @ready="reviewImageReady = $event"
+        />
+        <div v-else class="review-image-empty">当前样本没有可校对的检测框。</div>
         <el-form label-position="top" class="review-form">
           <el-form-item label="检测类别"><el-select v-model="reviewForm.className"><el-option v-for="category in categories" :key="category" :value="category" :label="category" /></el-select></el-form-item>
           <el-form-item label="检测正确性"><el-select v-model="reviewForm.correctness"><el-option label="正确" value="correct" /><el-option label="错误" value="incorrect" /><el-option label="待确认" value="uncertain" /></el-select></el-form-item>
-          <div class="box-fields"><el-form-item label="X 坐标（归一化）"><el-input-number v-model="reviewForm.box.x" :min="0" :max="0.95" :step="0.01" :precision="2" /></el-form-item><el-form-item label="Y 坐标（归一化）"><el-input-number v-model="reviewForm.box.y" :min="0" :max="0.95" :step="0.01" :precision="2" /></el-form-item><el-form-item label="宽度（归一化）"><el-input-number v-model="reviewForm.box.width" :min="0.05" :max="1" :step="0.01" :precision="2" /></el-form-item><el-form-item label="高度（归一化）"><el-input-number v-model="reviewForm.box.height" :min="0.05" :max="1" :step="0.01" :precision="2" /></el-form-item></div>
-          <p class="coordinate-note">检测框使用原图宽高的 0–1 归一化坐标，预览会随图像等比例缩放。</p>
+          <p class="coordinate-note">拖动检测框调整位置，拖动边角调整大小。</p>
         </el-form>
       </div>
-      <template #footer><el-button @click="reviewVisible = false">取消</el-button><el-button type="primary" :loading="state.actionPending.value" @click="saveReview">保存校对</el-button></template>
+      <template #footer><el-button @click="reviewVisible = false">取消</el-button><el-button type="primary" :loading="state.actionPending.value" :disabled="!reviewImageReady || !reviewDetection || state.actionPending.value" @click="saveReview">保存校对</el-button></template>
     </el-dialog>
   </div>
 </template>
@@ -108,6 +115,7 @@ import DashboardPanel from '@/components/dashboard/DashboardPanel.vue'
 import AgentChat from '@/shared/components/AgentChat.vue'
 import ModuleStats from '@/shared/components/ModuleStats.vue'
 import { MODULE_ROUTES } from '@/features/modules/routes'
+import DetectionBoxEditor from '@/features/visual-monitor/components/DetectionBoxEditor.vue'
 import { useVisualMonitor } from '@/features/visual-monitor/composables/useVisualMonitor'
 import type { DetectionCorrectness, NormalizedBox, VisualBatch, VisualBatchFilter, VerificationStatus } from '@/features/visual-monitor/types'
 import type { ModuleStatItem } from '@/shared/components/ModuleStats.vue'
@@ -115,7 +123,9 @@ import type { ModuleStatItem } from '@/shared/components/ModuleStats.vue'
 const router = useRouter()
 const state = useVisualMonitor()
 const reviewVisible = ref(false)
+const reviewImageReady = ref(false)
 const imageFailed = ref(false)
+const reviewDetection = computed(() => state.selectedSample.value?.detections[0] ?? null)
 const categories = ['刀尖缺口', '刃口磨损', '表面崩裂', '积屑瘤', '涂层剥落']
 const reviewForm = reactive<{ className: string; correctness: DetectionCorrectness; box: NormalizedBox }>({ className: categories[0], correctness: 'uncertain', box: { x: 0.4, y: 0.3, width: 0.35, height: 0.35 } })
 const statItems = computed<ModuleStatItem[]>(() => {
@@ -143,6 +153,7 @@ function onBatchFilterChange(value: string) { state.setBatchFilter(value as Visu
 watch(() => state.selectedSample.value, (sample) => {
   imageFailed.value = false
   const detection = sample?.detections[0]
+  reviewImageReady.value = false
   if (!detection) return
   reviewForm.className = detection.className
   reviewForm.correctness = sample?.correctness ?? 'uncertain'
@@ -156,12 +167,13 @@ async function markCorrect() {
 function openReview() {
   if (!state.selectedSample.value) return
   const detection = state.selectedSample.value.detections[0]
+  reviewImageReady.value = false
   if (detection) { reviewForm.className = detection.className; reviewForm.box = { ...detection.box }; reviewForm.correctness = state.selectedSample.value.correctness }
   reviewVisible.value = true
 }
 async function saveReview() {
   const sample = state.selectedSample.value
-  if (!sample) return
+  if (!sample || !reviewImageReady.value || !sample.detections[0] || state.actionPending.value) return
   try {
     const box = { ...reviewForm.box, width: Math.min(reviewForm.box.width, 1 - reviewForm.box.x), height: Math.min(reviewForm.box.height, 1 - reviewForm.box.y) }
     await state.saveReview({ sampleId: sample.id, correctness: reviewForm.correctness, className: reviewForm.className, box })
