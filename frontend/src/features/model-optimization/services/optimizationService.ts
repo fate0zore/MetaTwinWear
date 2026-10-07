@@ -9,7 +9,15 @@ export const optimizationService = {
   async record(id: string): Promise<OptimizationRecord | null> { await wait(180); const record = optimizationRecords.find(item => item.id === id); return record ? clone(record) : null },
   async stats(): Promise<OptimizationStats> {
     await wait(150)
-    return { anomalyForecasts: 246, conditionAccuracy: 97.6, lifeAccuracy: 93.2, modelName: '刀具状态监测模型', modelVersion: 'V2.8.1', updatedAt: '2026-10-03 16:40' }
+    return {
+      anomalyForecasts: 246,
+      conditionAccuracy: 97.6,
+      lifeAccuracy: 93.2,
+      models: [
+        { type: '车刀模型', version: 'V2.8.1', updatedAt: '2026-10-03 16:40' },
+        { type: '铣刀模型', version: 'V2.8.1', updatedAt: '2026-10-03 16:40' },
+      ],
+    }
   },
   async answer(question: string, context: { recordId: string; at: string; actualWearMm: number; predictedWearMm: number; temperatureC: number }): Promise<string> {
     await wait(680)

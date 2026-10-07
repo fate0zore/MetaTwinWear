@@ -2,7 +2,7 @@
   <div class="optimization-page flex min-h-dvh w-full min-w-0 flex-col">
     <DashboardHeader />
     <main class="module-content mx-auto flex w-full min-w-0 flex-1 flex-col px-3 pb-8 md:px-4 xl:px-5">
-      <!-- <section class="page-intro"><div><p class="eyebrow">MODEL REVIEW · PREDICTION COMPARISON</p><h1>记录分析与模型结果对比</h1><p>围绕已采集记录查看工艺时刻、硬件信号与磨损预测偏差。</p></div><div class="model-chip"><el-icon><Cpu /></el-icon>{{ state.stats.value?.modelName ?? '模型状态加载中' }}</div></section> -->
+      <!-- <section class="page-intro"><div><p class="eyebrow">MODEL REVIEW · PREDICTION COMPARISON</p><h1>记录分析与模型结果对比</h1><p>围绕已采集记录查看工艺时刻、硬件信号与磨损预测偏差。</p></div></section> -->
       <DashboardPanel title="模型运行统计" :icon="DataAnalysis" class="stats-panel" collapsible>
         <div class="panel-pad">
           <div v-if="!state.stats.value" class="inline-loading"><el-icon class="is-loading"><Loading /></el-icon> 正在加载模型指标…</div>
@@ -79,9 +79,14 @@ const statItems = computed<ModuleStatItem[]>(() => {
   if (!stats) return []
   return [
     { label: '异常准确预报次数', value: stats.anomalyForecasts, unit: '次', icon: Warning, tone: 'amber', hint: '历史验证集' },
-    { label: '状态监测准确率', value: stats.conditionAccuracy.toFixed(1), unit: '%', icon: Aim, tone: 'cyan', hint: `${stats.modelName} ${stats.modelVersion}` },
-    { label: '寿命预测准确率', value: stats.lifeAccuracy.toFixed(1), unit: '%', icon: TrendCharts, tone: 'green', hint: `更新于 ${stats.updatedAt}` },
-    { label: '模型版本', value: stats.modelVersion, icon: Cpu, tone: 'blue', hint: '刀具磨损状态监测' },
+    { label: '状态监测准确率', value: stats.conditionAccuracy.toFixed(1), unit: '%', icon: Aim, tone: 'cyan', hint: '刀具磨损状态监测' },
+    { label: '寿命预测准确率', value: stats.lifeAccuracy.toFixed(1), unit: '%', icon: TrendCharts, tone: 'green', hint: '历史验证集' },
+    {
+      label: '模型信息',
+      icon: Cpu,
+      tone: 'blue',
+      details: stats.models.map(model => ({ label: model.type, value: model.version, hint: `更新 ${model.updatedAt}` })),
+    },
   ]
 })
 const signalDefinitions = [

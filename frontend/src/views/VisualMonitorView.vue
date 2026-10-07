@@ -135,7 +135,12 @@ const statItems = computed<ModuleStatItem[]>(() => {
     { label: '采集数量', value: stats.collected.toLocaleString(), unit: '张', icon: Files, tone: 'cyan', hint: '3 个作业批次' },
     { label: '已校对', value: stats.verified.toLocaleString(), unit: '张', icon: CircleCheck, tone: 'green', ratio: `${Math.round(stats.verified / Math.max(1, stats.collected) * 100)}%` },
     { label: '检测准确率', value: stats.accuracyPercent.toFixed(1), unit: '%', icon: Aim, tone: 'blue', hint: '按当前 mock 样本统计' },
-    { label: '模型信息', value: stats.modelName, icon: Cpu, tone: 'amber', hint: `${stats.modelVersion} · 更新 ${stats.updatedAt}` },
+    {
+      label: '模型信息',
+      icon: Cpu,
+      tone: 'amber',
+      details: stats.models.map(model => ({ label: model.type, value: model.version, hint: `更新 ${model.updatedAt}` })),
+    },
   ]
 })
 

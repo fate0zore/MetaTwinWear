@@ -11,7 +11,10 @@
       <li v-for="log in previewLogs" :key="log.id" class="agent-log-entry">
         <time class="agent-log-time">{{ log.time }}</time>
         <div class="agent-log-copy">
-          <p class="agent-log-event">{{ log.event }}</p>
+          <p class="agent-log-event" :class="`tone-${log.level ?? 'info'}`">
+            <span class="agent-log-event-text">{{ log.event }}</span>
+            <small class="agent-log-level">{{ levelLabels[log.level ?? 'info'] }}</small>
+          </p>
           <p class="agent-log-advice"><span>智能体建议</span>{{ log.recommendation }}</p>
         </div>
       </li>
@@ -41,7 +44,10 @@
         <li v-for="log in pageLogs" :key="log.id" class="agent-log-entry">
           <time class="agent-log-time">{{ log.time }}</time>
           <div class="agent-log-copy">
-            <p class="agent-log-event">{{ log.event }}</p>
+            <p class="agent-log-event" :class="`tone-${log.level ?? 'info'}`">
+              <span class="agent-log-event-text">{{ log.event }}</span>
+              <small class="agent-log-level">{{ levelLabels[log.level ?? 'info'] }}</small>
+            </p>
             <p class="agent-log-advice"><span>智能体建议</span>{{ log.recommendation }}</p>
           </div>
         </li>
@@ -67,6 +73,12 @@ import { useDashboardStore } from '@/stores/dashboard'
 import DashboardPanel from './DashboardPanel.vue'
 
 const PAGE_SIZE = 10
+const levelLabels = {
+  info: '信息',
+  success: '正常',
+  warning: '警告',
+  danger: '高风险',
+} as const
 const store = useDashboardStore()
 const detailsVisible = ref(false)
 const currentPage = ref(1)

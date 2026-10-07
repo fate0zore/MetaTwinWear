@@ -1,3 +1,5 @@
+import type { ToolModelInfo } from '@/shared/types/model'
+
 export interface HardwareSignals {
   vibrationMmS: number
   spindleRpm: number
@@ -35,7 +37,5 @@ export interface OptimizationStats {
   anomalyForecasts: number
   conditionAccuracy: number
   lifeAccuracy: number
-  modelName: string
-  modelVersion: string
-  updatedAt: string
+  models: ToolModelInfo[]
 }

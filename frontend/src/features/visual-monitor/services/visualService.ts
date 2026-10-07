@@ -41,7 +41,15 @@ export const visualService = {
     await wait(130)
     const verified = visualSamples.filter(sample => sample.verificationStatus === 'verified').length
     const correct = visualSamples.filter(sample => sample.correctness === 'correct').length
-    return { collected: visualSamples.length, verified, accuracyPercent: Number((correct / Math.max(1, visualSamples.length) * 100).toFixed(1)), modelName: '刀尖视觉检测模型', modelVersion: 'V3.4.2', updatedAt: '2026-10-04 13:40' }
+    return {
+      collected: visualSamples.length,
+      verified,
+      accuracyPercent: Number((correct / Math.max(1, visualSamples.length) * 100).toFixed(1)),
+      models: [
+        { type: '车刀模型', version: 'V3.4.2', updatedAt: '2026-10-04 13:40' },
+        { type: '铣刀模型', version: 'V3.4.2', updatedAt: '2026-10-04 13:40' },
+      ],
+    }
   },
 
   async markCorrect(sampleId: string): Promise<VisualSample> {

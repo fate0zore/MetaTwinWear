@@ -1,3 +1,5 @@
+import type { ToolModelInfo } from '@/shared/types/model'
+
 export type VerificationStatus = 'verified' | 'pending'
 export type DetectionCorrectness = 'correct' | 'incorrect' | 'uncertain'
 export type VisualBatchFilter = 'all' | 'needs-review' | 'reviewed'
@@ -39,9 +41,7 @@ export interface VisualStats {
   collected: number
   verified: number
   accuracyPercent: number
-  modelName: string
-  modelVersion: string
-  updatedAt: string
+  models: ToolModelInfo[]
 }
 
 export interface VisualLog {

@@ -69,11 +69,14 @@ export interface WearState {
   status: WearStatus
 }
 
+export type DashboardLogLevel = 'info' | 'success' | 'warning' | 'danger'
+
 export interface DashboardLog {
   id: string
   time: string
   event: string
   recommendation: string
+  level: DashboardLogLevel
 }
 
 export interface MonitoringStatistics {

@@ -280,7 +280,13 @@
 .agent-log-copy { min-width: 0; }
 .agent-log-event,
 .agent-log-advice { margin: 0; overflow-wrap: anywhere; }
-.agent-log-event { color: #c4f2ff; font-size: 11px; line-height: 1.45; }
+.agent-log-event { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; color: #c4f2ff; font-size: 11px; line-height: 1.45; }
+.agent-log-event-text { min-width: 0; overflow-wrap: anywhere; }
+.agent-log-level { flex: none; padding: 0 5px; border: 1px solid currentColor; border-radius: 2px; font-size: 9px; line-height: 1.5; white-space: nowrap; }
+.agent-log-event.tone-info { color: var(--cyan); }
+.agent-log-event.tone-success { color: var(--green); }
+.agent-log-event.tone-warning { color: var(--yellow); }
+.agent-log-event.tone-danger { color: var(--red); }
 .agent-log-advice { margin-top: 3px; color: #88aebe; font-size: 10px; line-height: 1.4; }
 .agent-log-advice span { margin-right: 4px; color: #5cc995; white-space: nowrap; }
 .agent-log-empty.el-empty { padding: 6px 0 10px; }
