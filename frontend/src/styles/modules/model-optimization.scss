@@ -12,3 +12,54 @@
 .analysis-grid :deep(.agent-chat-panel > .panel-content) { display: flex; flex: 1; flex-direction: column; min-height: 0; }
 .analysis-grid :deep(.agent-chat-panel .chat-body) { flex: 1; min-height: 0; max-height: none; }
 .analysis-grid :deep(.agent-chat-panel .chat-empty) { flex: 1; }
+
+@media (min-width: 1280px) {
+  .moment-panel,
+  .signals-panel,
+  .comparison-panel {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .analysis-center {
+    grid-template-rows: minmax(min-content, 0.7fr) minmax(min-content, 1.3fr);
+  }
+
+  .moment-panel :deep(.panel-content),
+  .signals-panel :deep(.panel-content),
+  .comparison-panel :deep(.panel-content) {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+  }
+
+  .moment-panel :deep(.wear-photo) {
+    margin-top: auto;
+  }
+
+  .signals-panel :deep(.signal-grid) {
+    flex: 1 1 auto;
+    align-content: stretch;
+  }
+
+  .signals-panel :deep(.signal-card) {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .signals-panel :deep(.signal-chart) {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 128px;
+  }
+
+  .comparison-panel :deep(.comparison-chart) {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 360px;
+  }
+
+  .comparison-panel :deep(.time-control) {
+    margin-top: auto;
+  }
+}

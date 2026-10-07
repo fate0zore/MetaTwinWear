@@ -1,7 +1,7 @@
 <template>
-  <div class="visual-page min-h-screen w-full min-w-0">
+  <div class="visual-page flex min-h-dvh w-full min-w-0 flex-col">
     <DashboardHeader />
-    <main class="module-content mx-auto w-full min-w-0 px-3 pb-8 md:px-4 xl:px-5">
+    <main class="module-content mx-auto flex w-full min-w-0 flex-1 flex-col px-3 pb-8 md:px-4 xl:px-5">
       <!-- <section class="page-intro"><div><p class="eyebrow">VISION QUALITY · REVIEW WORKSPACE</p><h1>视觉监测</h1><p>按作业批次检查检测样本，修正结果后可继续查看关联模型记录。</p></div><el-button type="primary" plain :icon="Box" @click="openOptimization">前往模型优化</el-button></section> -->
       <DashboardPanel title="视觉监测统计" :icon="DataAnalysis" class="stats-panel" collapsible>
         <div class="panel-pad">
@@ -14,7 +14,7 @@
         <template #default><el-button link type="primary" @click="retry">重试加载</el-button></template>
       </el-alert>
 
-      <section class="visual-grid">
+      <section class="visual-grid xl:flex-1">
         <DashboardPanel title="作业批次" :icon="Files" class="batch-panel">
           <div class="batch-tools">
             <el-select :model-value="state.batchFilter.value" aria-label="批次状态筛选" @update:model-value="onBatchFilterChange">

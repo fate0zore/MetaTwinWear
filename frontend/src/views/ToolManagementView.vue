@@ -1,7 +1,7 @@
 <template>
-  <div class="tool-page min-h-screen w-full min-w-0">
+  <div class="tool-page flex min-h-dvh w-full min-w-0 flex-col">
     <DashboardHeader />
-    <main class="module-content mx-auto w-full min-w-0 px-3 pb-8 md:px-4 xl:px-5">
+    <main class="module-content mx-auto flex w-full min-w-0 flex-1 flex-col px-3 pb-8 md:px-4 xl:px-5">
       <!-- <section class="page-intro">
         <div><p class="eyebrow">TOOL FLEET · CONDITION OVERVIEW</p><h1>刀具管理</h1><p>统一查看库存、磨损状态与维护建议。当前数据由本地 mock 服务提供。</p></div>
         <div class="intro-chip"><span></span> 库存数据已同步</div>
@@ -18,8 +18,12 @@
         <template #default><el-button link type="primary" @click="state.reload">重试加载</el-button></template>
       </el-alert>
 
-      <section class="workspace-grid">
-        <DashboardPanel title="刀具列表" :icon="List" class="tool-list-panel">
+      <section
+        ref="workspaceGridRef"
+        :style="{ '--tool-grid-template': desktopToolGridTemplate }"
+        class="workspace-grid xl:flex-1"
+      >
+        <DashboardPanel id="tool-list-panel" title="刀具列表" :icon="List" class="tool-list-panel">
           <div class="list-tools">
             <el-select :model-value="state.typeFilter.value" aria-label="刀具类型筛选" @update:model-value="onTypeChange">
               <el-option label="全部类型" value="all" />
@@ -47,7 +51,30 @@
           </div>
         </DashboardPanel>
 
-        <DashboardPanel title="基础信息" :icon="Document" class="tool-info-panel">
+        <div
+          class="tool-list-resizer dashboard-column-resizer hidden xl:flex"
+          role="separator"
+          aria-orientation="vertical"
+          aria-controls="tool-list-panel tool-info-panel"
+          aria-label="调整刀具列表宽度"
+          :aria-valuemin="MIN_TOOL_LIST_WIDTH"
+          :aria-valuemax="toolListMaxWidth"
+          :aria-valuenow="Math.round(toolListColumnWidth)"
+          :aria-valuetext="`刀具列表宽度 ${Math.round(toolListColumnWidth)} 像素`"
+          tabindex="0"
+          title="拖动或使用方向键调整；双击或按 Enter 恢复默认"
+          @pointerdown="startToolListResize"
+          @pointermove="moveToolListResize"
+          @pointerup="finishToolListResize"
+          @pointercancel="cancelToolListResize"
+          @lostpointercapture="cancelToolListResize"
+          @dblclick="resetToolListWidth"
+          @keydown="handleToolListResizeKeydown"
+        >
+          <span class="dashboard-column-resizer-grip" aria-hidden="true"></span>
+        </div>
+
+        <DashboardPanel id="tool-info-panel" title="基础信息" :icon="Document" class="tool-info-panel">
           <template v-if="state.selectedTool.value">
             <div class="info-grid">
               <div v-for="field in toolFields" :key="field.label" class="info-row"><span>{{ field.label }}</span><strong>{{ field.value(state.selectedTool.value) }}</strong></div>
@@ -103,7 +130,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Cpu, DataAnalysis, Delete, Document, InfoFilled, List, Loading, Operation, Plus, Refresh, Search, Tools, TrendCharts, Warning, Clock } from '@element-plus/icons-vue'
@@ -122,6 +149,218 @@ const addVisible = ref(false)
 const adding = ref(false)
 const imageFailed = ref(false)
 const formRef = ref<FormInstance>()
+const DESKTOP_BREAKPOINT = 1280
+const RESIZER_TRACK_WIDTH = 6
+const PANEL_GUTTER_WIDTH = 12
+const MIN_TOOL_LIST_WIDTH = 280
+const MIN_INFO_COLUMN_WIDTH = 300
+const MIN_CONDITION_COLUMN_WIDTH = 420
+const TOOL_LIST_LAYOUT_STORAGE_KEY = 'metatwinwear.tool-management.list-width.v1'
+const workspaceGridRef = ref<HTMLElement | null>(null)
+const toolListColumnWidth = ref(0)
+const availableToolColumnWidth = ref(0)
+const storedToolListWidthRatio = ref(readStoredToolListWidthRatio())
+const hasCustomToolListWidth = ref(storedToolListWidthRatio.value !== null)
+const desktopToolGridTemplate = computed(() => hasCustomToolListWidth.value
+  ? `${toolListColumnWidth.value}px ${RESIZER_TRACK_WIDTH}px minmax(${MIN_INFO_COLUMN_WIDTH}px, .92fr) ${PANEL_GUTTER_WIDTH}px minmax(${MIN_CONDITION_COLUMN_WIDTH}px, 1.5fr)`
+  : `minmax(${MIN_TOOL_LIST_WIDTH}px, .88fr) ${RESIZER_TRACK_WIDTH}px minmax(${MIN_INFO_COLUMN_WIDTH}px, .92fr) ${PANEL_GUTTER_WIDTH}px minmax(${MIN_CONDITION_COLUMN_WIDTH}px, 1.5fr)`)
+const toolListMaxWidth = computed(() => Math.max(
+  MIN_TOOL_LIST_WIDTH,
+  availableToolColumnWidth.value - MIN_INFO_COLUMN_WIDTH - MIN_CONDITION_COLUMN_WIDTH,
+))
+let toolListResizeObserver: ResizeObserver | null = null
+let activeToolListResize: ActiveToolListResize | null = null
+
+interface ActiveToolListResize {
+  pointerId: number
+  startX: number
+  startWidth: number
+  wasCustom: boolean
+  didMove: boolean
+  target: HTMLElement
+}
+
+function readStoredToolListWidthRatio(): number | null {
+  if (typeof window === 'undefined') return null
+
+  try {
+    const stored = window.localStorage.getItem(TOOL_LIST_LAYOUT_STORAGE_KEY)
+    if (!stored) return null
+
+    const ratio = Number(stored)
+    return Number.isFinite(ratio) && ratio > 0 && ratio < 1 ? ratio : null
+  } catch {
+    return null
+  }
+}
+
+function getAvailableToolColumnWidth(): number {
+  const grid = workspaceGridRef.value
+  if (!grid) return 0
+
+  const style = getComputedStyle(grid)
+  const horizontalPadding = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0)
+  return Math.max(0, grid.clientWidth - horizontalPadding - RESIZER_TRACK_WIDTH - PANEL_GUTTER_WIDTH)
+}
+
+function getRenderedToolListWidth(): number {
+  const renderedWidth = workspaceGridRef.value?.querySelector<HTMLElement>('.tool-list-panel')?.getBoundingClientRect().width
+  return renderedWidth && renderedWidth > 0 ? renderedWidth : toolListColumnWidth.value
+}
+
+function clampToolListWidth(width: number, available: number): number {
+  const minimum = Math.min(MIN_TOOL_LIST_WIDTH, Math.max(0, available - MIN_INFO_COLUMN_WIDTH - MIN_CONDITION_COLUMN_WIDTH))
+  const maximum = Math.max(minimum, available - MIN_INFO_COLUMN_WIDTH - MIN_CONDITION_COLUMN_WIDTH)
+  return Math.min(maximum, Math.max(minimum, width))
+}
+
+function syncToolListWidthForViewport(): void {
+  const available = getAvailableToolColumnWidth()
+  if (available <= 0) return
+
+  availableToolColumnWidth.value = available
+  if (window.innerWidth < DESKTOP_BREAKPOINT || activeToolListResize) return
+
+  if (storedToolListWidthRatio.value === null) {
+    hasCustomToolListWidth.value = false
+    toolListColumnWidth.value = getRenderedToolListWidth()
+    return
+  }
+
+  toolListColumnWidth.value = clampToolListWidth(storedToolListWidthRatio.value * available, available)
+  hasCustomToolListWidth.value = true
+}
+
+function applyToolListWidth(width: number): void {
+  const available = getAvailableToolColumnWidth()
+  if (available <= 0) return
+
+  availableToolColumnWidth.value = available
+  toolListColumnWidth.value = clampToolListWidth(width, available)
+  hasCustomToolListWidth.value = true
+}
+
+function persistToolListWidth(): void {
+  const available = getAvailableToolColumnWidth()
+  if (available <= 0) return
+
+  availableToolColumnWidth.value = available
+  toolListColumnWidth.value = clampToolListWidth(toolListColumnWidth.value, available)
+  hasCustomToolListWidth.value = true
+  const ratio = toolListColumnWidth.value / available
+  storedToolListWidthRatio.value = ratio
+
+  try {
+    window.localStorage.setItem(TOOL_LIST_LAYOUT_STORAGE_KEY, String(ratio))
+  } catch {
+    // Keep the current layout usable when browser storage is unavailable.
+  }
+}
+
+function startToolListResize(event: PointerEvent): void {
+  if (window.innerWidth < DESKTOP_BREAKPOINT || activeToolListResize) return
+
+  const target = event.currentTarget as HTMLElement
+  const startWidth = getRenderedToolListWidth()
+  activeToolListResize = {
+    pointerId: event.pointerId,
+    startX: event.clientX,
+    startWidth,
+    wasCustom: hasCustomToolListWidth.value,
+    didMove: false,
+    target,
+  }
+
+  toolListColumnWidth.value = startWidth
+  hasCustomToolListWidth.value = true
+  target.focus({ preventScroll: true })
+  target.setPointerCapture(event.pointerId)
+  workspaceGridRef.value?.classList.add('is-resizing')
+  event.preventDefault()
+}
+
+function moveToolListResize(event: PointerEvent): void {
+  const active = activeToolListResize
+  if (!active || active.pointerId !== event.pointerId) return
+
+  const delta = event.clientX - active.startX
+  if (Math.abs(delta) < 0.5) return
+
+  active.didMove = true
+  applyToolListWidth(active.startWidth + delta)
+}
+
+function finishToolListResize(event: PointerEvent): void {
+  const active = activeToolListResize
+  if (!active || active.pointerId !== event.pointerId) return
+
+  if (active.didMove) persistToolListWidth()
+  else hasCustomToolListWidth.value = active.wasCustom
+  activeToolListResize = null
+  workspaceGridRef.value?.classList.remove('is-resizing')
+  if (active.target.hasPointerCapture(event.pointerId)) active.target.releasePointerCapture(event.pointerId)
+}
+
+function cancelActiveToolListResize(): void {
+  const active = activeToolListResize
+  if (!active) return
+
+  toolListColumnWidth.value = active.startWidth
+  hasCustomToolListWidth.value = active.wasCustom
+  activeToolListResize = null
+  workspaceGridRef.value?.classList.remove('is-resizing')
+  if (active.target.hasPointerCapture(active.pointerId)) active.target.releasePointerCapture(active.pointerId)
+}
+
+function cancelToolListResize(event: PointerEvent): void {
+  if (activeToolListResize?.pointerId !== event.pointerId) return
+  cancelActiveToolListResize()
+}
+
+function resetToolListWidth(): void {
+  cancelActiveToolListResize()
+  storedToolListWidthRatio.value = null
+  hasCustomToolListWidth.value = false
+  try {
+    window.localStorage.removeItem(TOOL_LIST_LAYOUT_STORAGE_KEY)
+  } catch {
+    // Reset the in-memory layout even when browser storage is unavailable.
+  }
+  requestAnimationFrame(syncToolListWidthForViewport)
+}
+
+function handleToolListResizeKeydown(event: KeyboardEvent): void {
+  if (window.innerWidth < DESKTOP_BREAKPOINT) return
+
+  if (event.key === 'Enter') {
+    event.preventDefault()
+    resetToolListWidth()
+    return
+  }
+
+  if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
+  event.preventDefault()
+
+  const direction = event.key === 'ArrowLeft' ? -1 : 1
+  const step = event.shiftKey ? 48 : 16
+  applyToolListWidth(getRenderedToolListWidth() + direction * step)
+  persistToolListWidth()
+}
+
+function handleWorkspaceGridResize(): void {
+  const nextWidth = getAvailableToolColumnWidth()
+  if (nextWidth <= 0) return
+
+  const widthChanged = Math.abs(nextWidth - availableToolColumnWidth.value) > 0.5
+  availableToolColumnWidth.value = nextWidth
+  if (widthChanged && !activeToolListResize) syncToolListWidthForViewport()
+}
+
+function handleWindowResize(): void {
+  cancelActiveToolListResize()
+  syncToolListWidthForViewport()
+}
+
 const form = reactive<NewToolInput>({ name: '', type: '立铣刀', specification: '', material: '硬质合金', coating: 'TiAlN 涂层', imageUrl: cutterToolImage })
 const rules: FormRules<NewToolInput> = {
   name: [{ required: true, message: '请输入刀具名称', trigger: 'blur' }],
@@ -130,6 +369,19 @@ const rules: FormRules<NewToolInput> = {
   material: [{ required: true, message: '请输入刀具材质', trigger: 'blur' }],
   coating: [{ required: true, message: '请输入涂层信息', trigger: 'blur' }],
 }
+onMounted(() => {
+  toolListResizeObserver = new ResizeObserver(handleWorkspaceGridResize)
+  if (workspaceGridRef.value) toolListResizeObserver.observe(workspaceGridRef.value)
+  window.addEventListener('resize', handleWindowResize)
+  syncToolListWidthForViewport()
+})
+
+onBeforeUnmount(() => {
+  toolListResizeObserver?.disconnect()
+  window.removeEventListener('resize', handleWindowResize)
+  cancelActiveToolListResize()
+})
+
 watch(() => state.selectedId.value, () => { imageFailed.value = false })
 const statItems = computed<ModuleStatItem[]>(() => [
   { label: '刀具总数', value: state.stats.value.total, unit: '把', icon: Tools, tone: 'cyan', hint: '当前库存' },

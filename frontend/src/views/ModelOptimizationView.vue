@@ -1,7 +1,7 @@
 <template>
-  <div class="optimization-page min-h-screen w-full min-w-0">
+  <div class="optimization-page flex min-h-dvh w-full min-w-0 flex-col">
     <DashboardHeader />
-    <main class="module-content mx-auto w-full min-w-0 px-3 pb-8 md:px-4 xl:px-5">
+    <main class="module-content mx-auto flex w-full min-w-0 flex-1 flex-col px-3 pb-8 md:px-4 xl:px-5">
       <!-- <section class="page-intro"><div><p class="eyebrow">MODEL REVIEW · PREDICTION COMPARISON</p><h1>记录分析与模型结果对比</h1><p>围绕已采集记录查看工艺时刻、硬件信号与磨损预测偏差。</p></div><div class="model-chip"><el-icon><Cpu /></el-icon>{{ state.stats.value?.modelName ?? '模型状态加载中' }}</div></section> -->
       <DashboardPanel title="模型运行统计" :icon="DataAnalysis" class="stats-panel" collapsible>
         <div class="panel-pad">
@@ -19,7 +19,7 @@
         <div class="record-selector"><span class="selector-caption">记录编号</span><el-select :model-value="state.selectedRecordId.value" :loading="state.loading.value" aria-label="选择模型分析记录" @change="onRecordChange"><el-option v-for="record in state.records.value" :key="record.id" :label="`${record.id}（${record.title}）`" :value="record.id" /></el-select><span v-if="state.selectedRecord.value" class="record-batch">批次 {{ state.selectedRecord.value.batchId }}</span></div>
       </DashboardPanel>
 
-      <section v-loading="state.loading.value" class="analysis-grid">
+      <section v-loading="state.loading.value" class="analysis-grid xl:flex-1">
         <DashboardPanel title="时刻信息" :icon="Clock" class="moment-panel">
           <template v-if="state.selectedRecord.value && state.selectedTime.value">
             <div class="moment-time"><span>当前分析时刻</span><strong>{{ state.selectedTime.value.at }}</strong></div>

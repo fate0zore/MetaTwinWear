@@ -23,3 +23,40 @@
 .visual-grid :deep(.agent-chat-panel > .panel-content) { display: flex; flex: 1; flex-direction: column; min-height: 0; }
 .visual-grid :deep(.agent-chat-panel .chat-body) { flex: 1; min-height: 0; max-height: none; }
 .visual-grid :deep(.agent-chat-panel .chat-empty) { flex: 1; }
+
+@media (min-width: 1280px) {
+  .batch-panel,
+  .image-panel,
+  .result-panel,
+  .samples-panel {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .batch-panel :deep(.panel-content),
+  .image-panel :deep(.panel-content),
+  .result-panel :deep(.panel-content),
+  .samples-panel :deep(.panel-content) {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+  }
+
+  .batch-list,
+  .sample-gallery,
+  .result-panel :deep(.detection-list) {
+    flex: 1 1 auto;
+    align-content: start;
+  }
+
+  .image-panel :deep(.image-stage) {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 140px;
+  }
+
+  .result-panel :deep(.result-actions),
+  .sample-pagination {
+    margin-top: auto;
+  }
+}
