@@ -2,7 +2,7 @@
   <div class="visual-page flex min-h-dvh w-full min-w-0 flex-col">
     <DashboardHeader />
     <main class="module-content mx-auto flex w-full min-w-0 flex-1 flex-col px-3 pb-8 md:px-4 xl:px-5">
-      <!-- <section class="page-intro"><div><p class="eyebrow">VISION QUALITY · REVIEW WORKSPACE</p><h1>视觉监测</h1><p>按作业批次检查检测样本，修正结果后可继续查看关联模型记录。</p></div><el-button type="primary" plain :icon="Box" @click="openOptimization">前往模型优化</el-button></section> -->
+      <!-- <section class="page-intro"><div><p class="eyebrow">VISION QUALITY · REVIEW WORKSPACE</p><h1>视觉监测</h1><p>按作业批次检查检测样本，修正结果后可继续查看关联模型记录。</p></div><el-button type="primary" plain :icon="Box">前往模型优化</el-button></section> -->
       <DashboardPanel title="视觉监测统计" :icon="DataAnalysis" class="stats-panel" collapsible>
         <div class="panel-pad">
           <div v-if="!state.stats.value" class="inline-loading"><el-icon class="is-loading"><Loading /></el-icon> 正在加载统计…</div>
@@ -79,7 +79,7 @@
             <el-table-column prop="result" label="结果" width="90"><template #default="{ row }"><span class="log-result"><i></i>{{ row.result }}</span></template></el-table-column>
           </el-table>
         </DashboardPanel>
-        <button class="optimization-card" @click="openOptimization"><el-icon><Box /></el-icon><strong>模型优化</strong><span>携带当前记录进入分析</span></button>
+        <button type="button" class="optimization-card" :disabled="!state.selectedBatch.value" @click="openOptimization"><el-icon><Box /></el-icon><strong>模型优化</strong><span>{{ state.selectedBatch.value ? `使用批次 ${state.selectedBatch.value.id} 作为训练数据` : '暂无可用批次' }}</span></button>
       </section>
     </main>
 
@@ -102,32 +102,66 @@
       </div>
       <template #footer><el-button @click="reviewVisible = false">取消</el-button><el-button type="primary" :loading="state.actionPending.value" :disabled="!reviewImageReady || !reviewDetection || state.actionPending.value" @click="saveReview">保存校对</el-button></template>
     </el-dialog>
+
+    <el-dialog v-model="optimizationVisible" title="视觉模型优化" width="min(520px, calc(100vw - 26px))" append-to-body destroy-on-close :close-on-click-modal="!optimizationPending" :close-on-press-escape="!optimizationPending">
+      <el-form ref="optimizationFormRef" :model="optimizationForm" :rules="optimizationRules" label-position="top" class="optimization-form">
+        <el-form-item label="训练数据批次">
+          <el-input :model-value="state.selectedBatch.value?.id ?? ''" disabled />
+        </el-form-item>
+        <el-form-item label="训练轮次" prop="epochs">
+          <el-input-number v-model="optimizationForm.epochs" :min="1" :max="200" :step="1" :precision="0" controls-position="right" class="optimization-field" :disabled="optimizationPending" />
+        </el-form-item>
+        <el-form-item label="学习率" prop="learningRate">
+          <el-input-number v-model="optimizationForm.learningRate" :min="0.00001" :max="0.1" :step="0.001" :precision="5" controls-position="right" class="optimization-field" :disabled="optimizationPending" />
+        </el-form-item>
+        <el-form-item label="批大小" prop="batchSize">
+          <el-select v-model="optimizationForm.batchSize" class="optimization-field" :disabled="optimizationPending">
+            <el-option v-for="size in optimizationBatchSizes" :key="size" :label="String(size)" :value="size" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="optimizationVisible = false" :disabled="optimizationPending">取消</el-button>
+        <el-button type="primary" :loading="optimizationPending" :disabled="!state.selectedBatch.value" @click="submitOptimization">确认优化</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { Aim, ArrowRight, Box, CircleCheck, Cpu, DataAnalysis, EditPen, Files, Histogram, Loading, Picture, PictureRounded, Tickets, Warning, WarningFilled } from '@element-plus/icons-vue'
 import DashboardHeader from '@/components/dashboard/DashboardHeader.vue'
 import DashboardPanel from '@/components/dashboard/DashboardPanel.vue'
 import AgentChat from '@/shared/components/AgentChat.vue'
 import ModuleStats from '@/shared/components/ModuleStats.vue'
-import { MODULE_ROUTES } from '@/features/modules/routes'
 import DetectionBoxEditor from '@/features/visual-monitor/components/DetectionBoxEditor.vue'
 import { useVisualMonitor } from '@/features/visual-monitor/composables/useVisualMonitor'
-import type { DetectionCorrectness, NormalizedBox, VisualBatch, VisualBatchFilter, VerificationStatus } from '@/features/visual-monitor/types'
+import type { DetectionCorrectness, ModelOptimizationRequest, NormalizedBox, OptimizationBatchSize, VisualBatch, VisualBatchFilter, VerificationStatus } from '@/features/visual-monitor/types'
 import type { ModuleStatItem } from '@/shared/components/ModuleStats.vue'
 
-const router = useRouter()
 const state = useVisualMonitor()
 const reviewVisible = ref(false)
+const optimizationVisible = ref(false)
+const optimizationPending = ref(false)
+const optimizationFormRef = ref<FormInstance>()
 const reviewImageReady = ref(false)
 const imageFailed = ref(false)
 const reviewDetection = computed(() => state.selectedSample.value?.detections[0] ?? null)
 const categories = ['刀尖缺口', '刃口磨损', '表面崩裂', '积屑瘤', '涂层剥落']
 const reviewForm = reactive<{ className: string; correctness: DetectionCorrectness; box: NormalizedBox }>({ className: categories[0], correctness: 'uncertain', box: { x: 0.4, y: 0.3, width: 0.35, height: 0.35 } })
+type OptimizationFormModel = Pick<ModelOptimizationRequest, 'epochs' | 'learningRate' | 'batchSize'>
+const optimizationForm = reactive<OptimizationFormModel>({ epochs: 50, learningRate: 0.001, batchSize: 16 })
+const optimizationBatchSizes: OptimizationBatchSize[] = [8, 16, 32, 64]
+const optimizationRules: FormRules = {
+  epochs: [
+    { required: true, type: 'number', min: 1, max: 200, message: '训练轮次需为 1 至 200 之间的整数', trigger: 'change' },
+    { validator: (_rule, value: number, callback) => Number.isInteger(value) ? callback() : callback(new Error('训练轮次必须为整数')), trigger: 'change' },
+  ],
+  learningRate: [{ required: true, type: 'number', min: 0.00001, max: 0.1, message: '学习率需在 0.00001 至 0.1 之间', trigger: 'change' }],
+  batchSize: [{ required: true, type: 'enum', enum: optimizationBatchSizes, message: '请选择有效的批大小', trigger: 'change' }],
+}
 const statItems = computed<ModuleStatItem[]>(() => {
   const stats = state.stats.value
   if (!stats) return []
@@ -154,6 +188,32 @@ function correctnessLabel(status: DetectionCorrectness) { return status === 'cor
 function correctTag(status: DetectionCorrectness) { return status === 'correct' ? 'success' : status === 'incorrect' ? 'danger' : 'info' }
 function onImageError(event: Event) { imageFailed.value = true; (event.currentTarget as HTMLImageElement).alt = '样本图片暂不可用' }
 function onBatchFilterChange(value: string) { state.setBatchFilter(value as VisualBatchFilter) }
+
+function openOptimization() {
+  if (!state.selectedBatch.value || optimizationPending.value) return
+  optimizationForm.epochs = 50
+  optimizationForm.learningRate = 0.001
+  optimizationForm.batchSize = 16
+  optimizationVisible.value = true
+}
+
+async function submitOptimization() {
+  if (optimizationPending.value || !state.selectedBatch.value || !optimizationFormRef.value) return
+  optimizationPending.value = true
+  try { await optimizationFormRef.value.validate() }
+  catch { optimizationPending.value = false; return }
+
+  try {
+    const batch = state.selectedBatch.value
+    if (!batch) return
+    const request: ModelOptimizationRequest = { batchId: batch.id, ...optimizationForm }
+    await state.optimizeModel(request)
+    optimizationVisible.value = false
+    ElMessage.success('模型优化请求已提交（演示）')
+  } catch (cause) {
+    ElMessage.error(cause instanceof Error ? cause.message : '模型优化提交失败，请重试。')
+  } finally { optimizationPending.value = false }
+}
 
 watch(() => state.selectedSample.value, (sample) => {
   imageFailed.value = false
@@ -185,12 +245,6 @@ async function saveReview() {
     reviewVisible.value = false
     ElMessage.success('校对结果已保存到当前 mock 数据集。')
   } catch (cause) { ElMessage.error(cause instanceof Error ? cause.message : '保存失败，请重试。') }
-}
-async function openOptimization() {
-  try {
-    const recordId = await state.logModelEntry()
-    await router.push({ name: MODULE_ROUTES.modelOptimization.name, query: { recordId } })
-  } catch (cause) { ElMessage.error(cause instanceof Error ? cause.message : '当前样本尚未关联模型记录。') }
 }
 async function retry() { await Promise.all([state.loadBatches(), state.refreshSummary(), state.loadSamples()]) }
 </script>

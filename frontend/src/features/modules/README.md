@@ -10,7 +10,7 @@
 | `/visual-monitor` | `src/views/VisualMonitorView.vue` |
 | `/model-optimization` | `src/views/ModelOptimizationView.vue` |
 
-`src/router/index.ts` registers these records. `DashboardHeader.vue` uses the shared route constants for its navigation links. Visual review carries the linked `recordId` to model optimization in the query string.
+`src/router/index.ts` registers these records. `DashboardHeader.vue` uses the shared route constants for its navigation links. Visual monitoring opens model optimization in a parameter dialog for the selected batch and currently submits through the visual service's mock implementation.
 
 ## Shared UI and data flow
 

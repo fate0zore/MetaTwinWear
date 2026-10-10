@@ -63,3 +63,12 @@ export interface ReviewSampleInput {
   className: string
   box: NormalizedBox
 }
+
+export type OptimizationBatchSize = 8 | 16 | 32 | 64
+
+export interface ModelOptimizationRequest {
+  batchId: string
+  epochs: number
+  learningRate: number
+  batchSize: OptimizationBatchSize
+}

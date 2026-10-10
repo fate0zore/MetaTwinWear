@@ -1,7 +1,7 @@
 import { computed, onScopeDispose, reactive, ref, watch } from 'vue'
 import { visualService } from '@/features/visual-monitor/services/visualService'
 import type { AgentMessage } from '@/shared/types/agent'
-import type { DetectionCorrectness, ReviewSampleInput, VisualBatch, VisualBatchFilter, VisualLog, VisualSample, VisualStats } from '@/features/visual-monitor/types'
+import type { DetectionCorrectness, ModelOptimizationRequest, ReviewSampleInput, VisualBatch, VisualBatchFilter, VisualLog, VisualSample, VisualStats } from '@/features/visual-monitor/types'
 
 export function useVisualMonitor() {
   const batchKeyword = ref('')
@@ -103,12 +103,7 @@ export function useVisualMonitor() {
     finally { if (sequence === chatSequence) chatPending.value = false }
   }
 
-  async function logModelEntry() {
-    if (!selectedSample.value) throw new Error('请先选择一个样本。')
-    const result = await visualService.logModelEntry(selectedSample.value.id)
-    await refreshSummary()
-    return result.recordId
-  }
+  async function optimizeModel(input: ModelOptimizationRequest) { await visualService.optimizeModel(input) }
 
   function setBatch(id: string) { selectedBatchId.value = id; samplePage.value = 1; sampleKeyword.value = ''; selectedSampleId.value = '' }
   function setSample(id: string) { selectedSampleId.value = id }
@@ -116,5 +111,5 @@ export function useVisualMonitor() {
   function setBatchKeyword(value: string) { batchKeyword.value = value }
   function setSampleKeyword(value: string) { sampleKeyword.value = value; samplePage.value = 1 }
 
-  return { batchKeyword, batchFilter, batches, selectedBatchId, selectedBatch, sampleKeyword, samplePage, samplePageSize, samples, sampleTotal, selectedSampleId, selectedSample, stats, logs, messages, batchLoading, sampleLoading, actionPending, chatPending, error, loadBatches, loadSamples, refreshSummary, markCorrect, saveReview, ask, logModelEntry, setBatch, setSample, setBatchFilter, setBatchKeyword, setSampleKeyword }
+  return { batchKeyword, batchFilter, batches, selectedBatchId, selectedBatch, sampleKeyword, samplePage, samplePageSize, samples, sampleTotal, selectedSampleId, selectedSample, stats, logs, messages, batchLoading, sampleLoading, actionPending, chatPending, error, loadBatches, loadSamples, refreshSummary, markCorrect, saveReview, ask, optimizeModel, setBatch, setSample, setBatchFilter, setBatchKeyword, setSampleKeyword }
 }

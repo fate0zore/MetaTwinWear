@@ -1,5 +1,5 @@
 import { visualBatches, visualLogs, visualSamples } from '@/features/visual-monitor/mock/data'
-import type { DetectionCorrectness, ReviewSampleInput, SampleListResult, VisualBatch, VisualLog, VisualSample, VisualStats } from '@/features/visual-monitor/types'
+import type { DetectionCorrectness, ModelOptimizationRequest, ReviewSampleInput, SampleListResult, VisualBatch, VisualLog, VisualSample, VisualStats } from '@/features/visual-monitor/types'
 
 const wait = (ms = 220) => new Promise<void>(resolve => window.setTimeout(resolve, ms))
 const clone = <T>(value: T): T => structuredClone(value)
@@ -78,12 +78,10 @@ export const visualService = {
 
   async logs(): Promise<VisualLog[]> { await wait(100); return clone(visualLogs.slice(0, 8)) },
 
-  async logModelEntry(sampleId: string): Promise<{ recordId: string }> {
-    await wait(110)
-    const sample = visualSamples.find(item => item.id === sampleId)
-    if (!sample) throw new Error('无法关联当前样本的优化记录。')
-    appendLog('模型分析', `由 ${sample.id} 打开模型记录 ${sample.recordId}`, '已进入')
-    return { recordId: sample.recordId }
+  async optimizeModel(input: ModelOptimizationRequest): Promise<void> {
+    await wait(450)
+    if (!visualBatches.some(batch => batch.id === input.batchId)) throw new Error('当前批次已不存在，请重新选择。')
+    if (!visualSamples.some(sample => sample.batchId === input.batchId)) throw new Error('当前批次没有可用于优化的视觉样本。')
   },
 
   async answer(question: string, context: { batchId: string; sampleId: string; className: string; correctness: DetectionCorrectness; confidence: number }): Promise<string> {
