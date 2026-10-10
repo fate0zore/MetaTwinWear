@@ -26,7 +26,7 @@
             <div class="settings-panel-intro"><h2 id="settings-section-profile">个人资料</h2><p>更新你的个人联系信息，账号与角色由系统分配。</p></div>
             <el-form ref="profileForm" :model="draft.profile" :rules="profileRules" label-position="top" class="settings-form" @submit.prevent>
               <div class="settings-form-grid">
-                <el-form-item label="账号" class="readonly-field"><el-input :model-value="draft.profile.account" disabled><template #prefix><el-icon><User /></el-icon></template></el-input></el-form-item>
+                <el-form-item label="账号" class="readonly-field"><el-input :model-value="auth.requiresLogin && auth.authenticated ? auth.account : draft.profile.account" disabled><template #prefix><el-icon><User /></el-icon></template></el-input></el-form-item>
                 <el-form-item label="用户角色" class="readonly-field"><el-input :model-value="draft.profile.role" disabled /></el-form-item>
                 <el-form-item label="姓名" prop="name" required><el-input v-model="draft.profile.name" maxlength="40" show-word-limit placeholder="请输入姓名" /></el-form-item>
                 <el-form-item label="所属部门" prop="department"><el-input v-model="draft.profile.department" maxlength="60" placeholder="请输入部门名称" /></el-form-item>
@@ -80,6 +80,7 @@ import { ArrowRight, Bell, Check, CircleCheck, Clock, Cpu, DataBoard, Download, 
 import DashboardHeader from '@/components/dashboard/DashboardHeader.vue'
 import DashboardPanel from '@/components/dashboard/DashboardPanel.vue'
 import { DEFAULT_USER_SETTINGS, cloneSettings } from '@/features/system-settings/mock/data'
+import { useAuthStore } from '@/features/auth/stores/auth'
 import { settingsService } from '@/features/system-settings/services/settingsService'
 import { useSystemSettingsStore } from '@/features/system-settings/stores/systemSettings'
 import { MACHINE_INSTANCES, SYSTEM_PAGES, type NotificationPreferences, type UserSettings } from '@/features/system-settings/types'
@@ -99,6 +100,7 @@ const notificationTypes: { key: NotificationKey; label: string; title: string; m
 ]
 
 const store = useSystemSettingsStore()
+const auth = useAuthStore()
 const activeSection = ref<SectionId>('profile')
 const profileForm = ref<FormInstance>()
 const exporting = ref(false)
@@ -211,7 +213,7 @@ async function exportSettings() {
 }
 
 function confirmDiscard(): boolean {
-  return !dirty.value || window.confirm('还有未保存的设置，确定离开并放弃修改吗？')
+  return auth.sessionExpired || !dirty.value || window.confirm('还有未保存的设置，确定离开并放弃修改吗？')
 }
 
 onBeforeRouteLeave(() => confirmDiscard())

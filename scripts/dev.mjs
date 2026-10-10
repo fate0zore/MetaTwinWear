@@ -8,8 +8,8 @@ const isWindows = process.platform === 'win32'
 const children = []
 let stopping = false
 
-if (!['mock', 'integration'].includes(mode)) {
-  console.error('用法: npm run dev:mock | npm run dev:integration')
+if (!['mock', 'mock-login', 'integration'].includes(mode)) {
+  console.error('用法: npm run dev:mock | npm run dev:mock:login | npm run dev:integration')
   process.exit(2)
 }
 
@@ -104,9 +104,16 @@ function startGradle(task) {
 }
 
 function startFrontend() {
-  console.log(`前端启动地址: http://localhost:5173/monitor (${mode === 'mock' ? 'Mock' : 'API'})`)
+  const dataSource = mode === 'integration' ? 'api' : 'mock'
+  const skipLogin = mode === 'mock'
+  const entry = skipLogin ? '/monitor' : '/login'
+  console.log(`前端启动地址: http://localhost:5173${entry} (${dataSource === 'mock' ? 'Mock' : 'API'}${skipLogin ? '，跳过登录' : '，需要登录'})`)
   return start('npm', ['--prefix', 'frontend', 'run', 'dev', '--', '--strictPort'], {
-    env: { ...process.env, VITE_DATA_SOURCE: mode === 'mock' ? 'mock' : 'api' },
+    env: {
+      ...process.env,
+      VITE_DATA_SOURCE: dataSource,
+      VITE_SKIP_LOGIN: skipLogin ? 'true' : 'false',
+    },
   })
 }
 
@@ -135,7 +142,7 @@ process.once('SIGTERM', () => void stopAll(143))
 
 try {
   await ensureFrontendDependencies()
-  if (mode === 'mock') {
+  if (mode !== 'integration') {
     await ensurePortsFree([[5173, 'Vite']])
     startFrontend()
   } else {

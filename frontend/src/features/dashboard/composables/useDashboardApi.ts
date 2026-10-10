@@ -10,6 +10,7 @@ export function useDashboardApi() {
   let retryTimer: number | null = null
   let lastContact = 0
   let connecting = false
+  let disposed = false
 
   async function connect() {
     if (connecting) return
@@ -32,6 +33,7 @@ export function useDashboardApi() {
         dashboardApi.options(),
         dashboardApi.tools(),
       ])
+      if (disposed) return
       store.applyOptions(options)
       store.applyToolCatalog(tools)
       store.initializeLocalConfiguration(snapshot.tool, snapshot.workpiece)
@@ -54,6 +56,7 @@ export function useDashboardApi() {
         },
       )
     } catch (error) {
+      if (disposed) return
       store.apiConnection = 'disconnected'
       store.apiError = error instanceof Error ? error.message : '后端连接失败'
     } finally {
@@ -75,6 +78,7 @@ export function useDashboardApi() {
   }
 
   onBeforeUnmount(() => {
+    disposed = true
     source?.close()
     if (retryTimer !== null) window.clearInterval(retryTimer)
   })

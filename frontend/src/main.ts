@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'
 import { useSystemSettingsStore } from '@/features/system-settings/stores/systemSettings'
+import { useAuthStore } from '@/features/auth/stores/auth'
 
 import App from './App.vue'
 import router from './router'
@@ -14,6 +15,7 @@ const pinia = createPinia()
 
 async function mountApp() {
   await useSystemSettingsStore(pinia).initialize()
+  await useAuthStore(pinia).initialize()
 
   createApp(App)
     .use(pinia)

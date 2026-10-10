@@ -8,6 +8,10 @@
         <div class="brand-title">刀具磨损智能监测与预测系统</div>
         <div class="brand-subtitle">TOOL WEAR INTELLIGENT MONITORING</div>
       </div>
+      <div v-if="showAuthenticatedUser" class="mobile-auth-entry">
+        <span class="mobile-auth-account" :title="auth.account">{{ auth.account }}</span>
+        <el-button text size="small" :icon="SwitchButton" aria-label="退出登录" @click="logout">退出</el-button>
+      </div>
     </div>
 
     <nav class="main-nav order-3 grid w-full min-w-0 flex-none grid-cols-2 justify-center gap-1 min-[480px]:grid-cols-4 xl:order-none xl:flex xl:w-auto xl:flex-1 xl:self-stretch" aria-label="主导航">
@@ -49,6 +53,10 @@
       </el-select>
       <span class="header-divider"></span>
       <span class="header-date">{{ currentTime }}</span>
+      <span v-if="showAuthenticatedUser" class="header-auth-entry">
+        <span class="header-auth-account" :title="auth.account">{{ auth.account }}</span>
+        <el-button text size="small" :icon="SwitchButton" aria-label="退出登录" @click="logout">退出</el-button>
+      </span>
       <el-icon class="header-action"><Bell /></el-icon>
       <RouterLink to="/system-settings" class="header-settings-link" aria-label="打开系统设置" title="系统设置">
         <el-icon class="header-action"><Setting /></el-icon>
@@ -60,19 +68,37 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { useRoute, RouterLink } from 'vue-router'
-import { Aim, Bell, Box, Clock, DataAnalysis, Monitor, Scissor, Setting, Warning } from '@element-plus/icons-vue'
+import { useRoute, useRouter, RouterLink } from 'vue-router'
+import { Aim, Bell, Box, Clock, DataAnalysis, Monitor, Scissor, Setting, SwitchButton, Warning } from '@element-plus/icons-vue'
 import swjtuCrest from '@/assets/dashboard/swjtu-crest.png'
+import { useAuthStore } from '@/features/auth/stores/auth'
 import { MODULE_ROUTES } from '@/features/modules/routes'
 import { useSystemSettingsStore } from '@/features/system-settings/stores/systemSettings'
 import { MACHINE_INSTANCES, type MachineInstanceId } from '@/features/system-settings/types'
 
 const route = useRoute()
+const router = useRouter()
 const store = useSystemSettingsStore()
+const auth = useAuthStore()
 const now = ref(new Date())
 let timer: number | undefined
 
 const mockOnlineMachineInstances = MACHINE_INSTANCES
+const showAuthenticatedUser = computed(() => auth.requiresLogin && auth.authenticated)
+
+async function logout() {
+  auth.beginLogout()
+  try {
+    const failure = await router.push({ name: 'Login' })
+    if (failure) {
+      auth.cancelLogout()
+      return
+    }
+    auth.logout()
+  } catch {
+    auth.cancelLogout()
+  }
+}
 
 async function changeMachine(value: MachineInstanceId) {
   if (value === store.settings.preferences.machineId) return
