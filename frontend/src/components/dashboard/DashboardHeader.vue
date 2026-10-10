@@ -26,11 +26,13 @@
     <div class="header-status">
       <span class="online-dot" aria-hidden="true"></span>
       <el-select
-        v-model="selectedMachineId"
+        :model-value="store.settings.preferences.machineId"
+        :loading="store.saving"
         class="machine-instance-select"
         size="small"
         aria-label="选择在线机床实例"
         :teleported="false"
+        @change="changeMachine"
       >
         <el-option
           v-for="instance in mockOnlineMachineInstances"
@@ -48,47 +50,38 @@
       <span class="header-divider"></span>
       <span class="header-date">{{ currentTime }}</span>
       <el-icon class="header-action"><Bell /></el-icon>
-      <el-icon class="header-action"><Setting /></el-icon>
+      <RouterLink to="/system-settings" class="header-settings-link" aria-label="打开系统设置" title="系统设置">
+        <el-icon class="header-action"><Setting /></el-icon>
+      </RouterLink>
     </div>
   </header>
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import { useRoute, RouterLink } from 'vue-router'
 import { Aim, Bell, Box, Clock, DataAnalysis, Monitor, Scissor, Setting, Warning } from '@element-plus/icons-vue'
 import swjtuCrest from '@/assets/dashboard/swjtu-crest.png'
 import { MODULE_ROUTES } from '@/features/modules/routes'
+import { useSystemSettingsStore } from '@/features/system-settings/stores/systemSettings'
+import { MACHINE_INSTANCES, type MachineInstanceId } from '@/features/system-settings/types'
 
 const route = useRoute()
+const store = useSystemSettingsStore()
 const now = ref(new Date())
 let timer: number | undefined
 
-// Mock machine instances used by the header selector.
-const mockOnlineMachineInstances = [
-  { id: 'cnc-01', label: '机床 01 · 五轴加工中心' },
-  { id: 'cnc-02', label: '机床 02 · 立式加工中心' },
-  { id: 'cnc-03', label: '机床 03 · 数控车床' },
-]
-const selectedMachineId = ref(mockOnlineMachineInstances[0].id)
-const selectedMachineStorageKey = 'metatwinwear.selectedMachineInstance'
+const mockOnlineMachineInstances = MACHINE_INSTANCES
 
-try {
-  const savedMachineId = window.localStorage.getItem(selectedMachineStorageKey)
-  if (savedMachineId && mockOnlineMachineInstances.some((instance) => instance.id === savedMachineId)) {
-    selectedMachineId.value = savedMachineId
-  }
-} catch {
-  // The selector remains usable if browser storage is unavailable.
-}
-
-watch(selectedMachineId, (machineId) => {
+async function changeMachine(value: MachineInstanceId) {
+  if (value === store.settings.preferences.machineId) return
   try {
-    window.localStorage.setItem(selectedMachineStorageKey, machineId)
-  } catch {
-    // Keep the current selection in memory if browser storage is unavailable.
+    await store.updateMachine(value)
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '机床选择保存失败')
   }
-})
+}
 
 const currentTime = computed(() => now.value.toLocaleString('zh-CN', {
   year: 'numeric',

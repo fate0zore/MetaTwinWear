@@ -1,12 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { MODULE_ROUTES_RECORDS } from '@/features/modules/routes'
+import { useSystemSettingsStore } from '@/features/system-settings/stores/systemSettings'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      redirect: '/monitor',
+      redirect: () => useSystemSettingsStore().settings.preferences.defaultRoute,
     },
     {
       path: '/monitor',
@@ -34,7 +35,7 @@ const router = createRouter({
     {
       path: '/system-settings',
       name: 'SystemSettings',
-      component: () => import('@/views/PlaceholderView.vue'),
+      component: () => import('@/views/SystemSettingsView.vue'),
       meta: { title: '系统设置' },
     },
     ...MODULE_ROUTES_RECORDS,

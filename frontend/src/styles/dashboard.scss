@@ -97,6 +97,9 @@
 .header-divider { width: 1px; height: 18px; margin: 0 7px; background: rgba(83, 143, 167, .36); }
 .header-date { color: #b0cfda; }
 .header-action { color: #6a9bb1; margin-left: 9px; }
+.header-settings-link { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; min-height: 32px; border-radius: 3px; text-decoration: none; }
+.header-settings-link:hover .header-action, .header-settings-link:focus-visible .header-action { color: var(--cyan); }
+.header-settings-link:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 
 .signal-section { position: relative; min-width: 0; }
 .dashboard-collapse.el-collapse {
