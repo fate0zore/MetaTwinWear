@@ -72,7 +72,13 @@ import { ArrowLeft, ArrowRight, ChatDotRound, Promotion, Service, UserFilled } f
 import DashboardPanel from '@/components/dashboard/DashboardPanel.vue'
 import type { AgentMessage } from '@/shared/types/agent'
 
-defineProps<{ messages: AgentMessage[]; pending: boolean }>()
+const props = withDefaults(defineProps<{
+  messages: AgentMessage[]
+  pending: boolean
+  preserveGridHeightOnCollapse?: boolean
+}>(), {
+  preserveGridHeightOnCollapse: false,
+})
 const emit = defineEmits<{ send: [question: string] }>()
 const draft = ref('')
 const DESKTOP_BREAKPOINT = 1280
@@ -113,6 +119,32 @@ let activeResize: ActiveChatResize | null = null
 let gridResizeObserver: ResizeObserver | null = null
 let parentGrid: HTMLElement | null = null
 let originalGridTemplateColumns = ''
+let originalGridTemplateRows = ''
+let originalGridHeight = ''
+let lockedGridHeight: number | null = null
+
+function lockGridHeight(): void {
+  if (!props.preserveGridHeightOnCollapse || window.innerWidth < DESKTOP_BREAKPOINT || !parentGrid || lockedGridHeight !== null) return
+  const height = parentGrid.getBoundingClientRect().height
+  if (height <= 0) return
+
+  lockedGridHeight = height
+  // Keep width-sensitive dashboard panels at their current height as the chat column is reclaimed.
+  parentGrid.style.height = `${height}px`
+  parentGrid.style.gridTemplateRows = 'minmax(0, 1fr)'
+}
+
+function releaseGridHeightLock(): void {
+  if (!parentGrid || lockedGridHeight === null) return
+  parentGrid.style.height = originalGridHeight
+  parentGrid.style.gridTemplateRows = originalGridTemplateRows
+  lockedGridHeight = null
+}
+
+function handleWindowResize(): void {
+  releaseGridHeightLock()
+  syncGridLayout()
+}
 
 function toggleCollapsed() {
   if (isCollapsed.value) {
@@ -124,6 +156,7 @@ function toggleCollapsed() {
 
   cancelActiveResize()
   ensureGridRatios()
+  lockGridHeight()
   isCollapsed.value = true
   applyGridLayout()
 }
@@ -280,6 +313,7 @@ function cancelResize(event: PointerEvent): void {
 
 function resetChatPanelWidth(): void {
   cancelActiveResize()
+  releaseGridHeightLock()
   isCollapsed.value = false
   hasCustomGridLayout.value = false
   firstColumnRatio.value = null
@@ -320,17 +354,21 @@ onMounted(() => {
   if (!parentGrid) return
 
   originalGridTemplateColumns = parentGrid.style.gridTemplateColumns
+  originalGridTemplateRows = parentGrid.style.gridTemplateRows
+  originalGridHeight = parentGrid.style.height
   updateMeasuredWidths()
   gridResizeObserver = new ResizeObserver(syncGridLayout)
   gridResizeObserver.observe(parentGrid)
-  window.addEventListener('resize', syncGridLayout)
+  window.addEventListener('resize', handleWindowResize)
 })
 
 onBeforeUnmount(() => {
   gridResizeObserver?.disconnect()
-  window.removeEventListener('resize', syncGridLayout)
+  window.removeEventListener('resize', handleWindowResize)
   cancelActiveResize()
   if (parentGrid) parentGrid.style.gridTemplateColumns = originalGridTemplateColumns
+  if (parentGrid) parentGrid.style.gridTemplateRows = originalGridTemplateRows
+  if (parentGrid) parentGrid.style.height = originalGridHeight
 })
 
 function submit() {

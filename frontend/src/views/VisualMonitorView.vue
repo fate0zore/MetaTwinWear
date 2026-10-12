@@ -67,7 +67,12 @@
           </DashboardPanel>
         </div>
 
-        <AgentChat :messages="state.messages.value" :pending="state.chatPending.value" @send="state.ask" />
+        <AgentChat
+          :messages="state.messages.value"
+          :pending="state.chatPending.value"
+          :preserve-grid-height-on-collapse="true"
+          @send="state.ask"
+        />
       </section>
 
       <section class="bottom-grid">

@@ -25,6 +25,10 @@
 .visual-grid :deep(.agent-chat-panel .chat-empty) { flex: 1; }
 
 @media (min-width: 1280px) {
+  .visual-grid > * {
+    min-height: 0;
+  }
+
   .batch-panel,
   .image-panel,
   .result-panel,
