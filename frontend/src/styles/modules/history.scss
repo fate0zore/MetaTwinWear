@@ -1,0 +1,59 @@
+.history-page {
+  color: var(--text);
+  background: radial-gradient(circle at 48% 10%, rgba(0, 108, 152, .15), transparent 34%), linear-gradient(135deg, #071822, #03101a 58%, #020910);
+}
+.history-page-intro { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 4px 0 13px; }
+.history-page-intro h1 { margin: 0; color: #d9f7ff; font-size: 22px; line-height: 1.3; }
+.history-page-intro p:not(.eyebrow) { margin: 5px 0 0; color: #80a9bb; font-size: 13px; line-height: 1.5; }
+.eyebrow { margin: 0 0 4px; color: var(--cyan); font-size: 12px; letter-spacing: 1.2px; }
+.demo-data-tag { flex: 0 0 auto; }
+.history-search-panel, .history-stats-panel, .history-analysis-panel, .history-table-panel { margin-bottom: 12px; min-width: 0; }
+.history-search-content { display: grid; gap: 12px; padding: 12px; }
+.history-filter-grid { display: grid; grid-template-columns: minmax(230px, 1.3fr) repeat(4, minmax(140px, 1fr)); gap: 12px; }
+.filter-field { display: grid; min-width: 0; gap: 6px; color: #8eb7c7; font-size: 12px; }
+.filter-field :deep(.el-date-editor), .filter-field :deep(.el-select), .filter-field :deep(.el-input) { width: 100%; min-width: 0; }
+.filter-field :deep(.el-date-editor) { --el-date-editor-width: 100%; }
+.history-query-actions, .query-buttons, .saved-query-controls, .quick-query-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.history-query-actions { justify-content: space-between; }
+.saved-query-controls :deep(.el-select) { width: min(230px, 100%); }
+.quick-query-row { padding-top: 10px; border-top: 1px solid rgba(36, 129, 171, .25); }
+.quick-query-row > span { margin-right: 3px; color: #8eb7c7; font-size: 12px; }
+.quick-query-row small { color: #729caf; font-size: 12px; }
+.history-error { margin: 0 0 12px; --el-alert-bg-color: rgba(98, 26, 34, .45); --el-alert-border-color: rgba(255, 78, 88, .4); --el-alert-title-color: #ffd5d7; }
+.history-storage-warning { margin: 0 0 12px; --el-alert-bg-color: rgba(79, 54, 16, .4); --el-alert-border-color: rgba(244, 189, 72, .4); --el-alert-title-color: #ffe2a1; }
+.history-stats-panel :deep(.panel-content) { padding: 10px; }
+.history-chart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 10px; min-height: 140px; }
+.history-table-panel :deep(.panel-content) { min-width: 0; }
+.history-table-wrap { width: 100%; max-width: 100%; overflow-x: auto; }
+.history-table { min-width: 1060px; }
+.table-total { margin-right: 7px; color: #81aabc; font-size: 12px; white-space: nowrap; }
+.history-pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 10px 12px; color: #789fb1; font-size: 12px; }
+.history-pagination :deep(.el-pagination) { max-width: 100%; flex-wrap: wrap; }
+.history-pagination :deep(.el-pagination__sizes) { margin-right: 6px; }
+
+@media (max-width: 1279px) {
+  .history-filter-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 767px) {
+  .history-page-intro { align-items: flex-start; }
+  .history-page-intro h1 { font-size: 20px; }
+  .history-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+  .history-query-actions { align-items: flex-start; flex-direction: column; }
+  .saved-query-controls { width: 100%; }
+  .saved-query-controls :deep(.el-select) { flex: 1 1 150px; width: auto; }
+  .history-chart-grid { grid-template-columns: minmax(0, 1fr); padding: 8px; gap: 9px; }
+  .history-pagination { align-items: flex-start; flex-direction: column; }
+  .history-analysis-panel :deep(.panel-heading) { align-items: flex-start; flex-direction: column; gap: 8px; }
+}
+@media (max-width: 480px) {
+  .history-page > .module-content { padding-right: 9px; padding-left: 9px; }
+  .history-page-intro { flex-wrap: wrap; }
+  .history-filter-grid { grid-template-columns: minmax(0, 1fr); }
+  .history-search-content { padding: 9px; }
+  .saved-query-controls > .el-button { flex: 1 1 auto; }
+  .quick-query-row { align-items: flex-start; }
+  .quick-query-row small { flex-basis: 100%; }
+  .history-analysis-panel :deep(.panel-heading-actions), .history-analysis-panel :deep(.el-radio-group) { max-width: 100%; }
+  .history-analysis-panel :deep(.el-radio-group) { display: flex; overflow-x: auto; }
+  .history-analysis-panel :deep(.el-radio-button__inner) { padding: 8px 10px; white-space: nowrap; }
+}

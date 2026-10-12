@@ -3,6 +3,7 @@ export const LEGACY_MACHINE_STORAGE_KEY = 'metatwinwear.selectedMachineInstance'
 
 export const SYSTEM_PAGES = [
   { label: '实时监测', value: '/monitor' },
+  { label: '数据统计记录表', value: '/history' },
   { label: '刀具管理', value: '/tool-management' },
   { label: '视觉监测', value: '/visual-monitor' },
   { label: '模型优化', value: '/model-optimization' },

@@ -9,6 +9,7 @@
 | `/tool-management` | `src/views/ToolManagementView.vue` |
 | `/visual-monitor` | `src/views/VisualMonitorView.vue` |
 | `/model-optimization` | `src/views/ModelOptimizationView.vue` |
+| `/history` | `src/views/HistoryView.vue` |
 
 `src/router/index.ts` registers these records. `DashboardHeader.vue` uses the shared route constants for its navigation links. Visual monitoring opens model optimization in a parameter dialog for the selected batch and currently submits through the visual service's mock implementation.
 
@@ -25,6 +26,8 @@ view → feature composable → feature service → mock/data.ts
 - Model optimization: `OptimizationRecord` contains timestamped `OptimizationTimePoint` entries with process parameters, hardware signals, and measured/predicted wear.
 
 Mock entry points are `toolService.ts`, `visualService.ts`, and `optimizationService.ts`; their matching data lives under each feature's `mock/data.ts`. Mutations remain in memory for the current application session.
+
+History statistics combine the monitoring, tool, visual-batch, and model-optimization records through `features/history/services/historyService.ts`. The first version uses stable monitoring history fixtures and the existing mock services; query presets and the latest query stay in browser storage.
 
 ## Replacing mock services
 

@@ -120,9 +120,9 @@ const currentTime = computed(() => now.value.toLocaleString('zh-CN', {
 
 const navItems = [
   { label: '实时监测', path: '/monitor', icon: Monitor },
+  { label: '历史数据', path: MODULE_ROUTES.history.path, icon: Clock },
   // { label: '磨损分析', path: '/wear-analysis', icon: DataAnalysis },
   // { label: '预测预警', path: '/prediction-warning', icon: Warning },
-  // { label: '历史数据', path: '/history', icon: Clock },
   { label: '刀具管理', path: MODULE_ROUTES.toolManagement.path, icon: Scissor },
   { label: '视觉监测', path: MODULE_ROUTES.visualMonitor.path, icon: Aim },
   { label: '模型优化', path: MODULE_ROUTES.modelOptimization.path, icon: Box },

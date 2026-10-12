@@ -3,9 +3,16 @@ export const MODULE_ROUTES = {
   toolManagement: { name: 'ToolManagement', path: '/tool-management' },
   visualMonitor: { name: 'VisualMonitor', path: '/visual-monitor' },
   modelOptimization: { name: 'ModelOptimization', path: '/model-optimization' },
+  history: { name: 'History', path: '/history' },
 } as const
 
 export const MODULE_ROUTES_RECORDS: RouteRecordRaw[] = [
+  {
+    path: MODULE_ROUTES.history.path,
+    name: MODULE_ROUTES.history.name,
+    component: () => import('@/views/HistoryView.vue'),
+    meta: { title: '数据统计记录表' },
+  },
   {
     path: MODULE_ROUTES.toolManagement.path,
     name: MODULE_ROUTES.toolManagement.name,

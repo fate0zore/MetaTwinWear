@@ -44,12 +44,6 @@ const router = createRouter({
       meta: { title: '预测预警' },
     },
     {
-      path: '/history',
-      name: 'History',
-      component: () => import('@/views/PlaceholderView.vue'),
-      meta: { title: '历史数据' },
-    },
-    {
       path: '/system-settings',
       name: 'SystemSettings',
       component: () => import('@/views/SystemSettingsView.vue'),

@@ -5,7 +5,7 @@
 <script setup lang="ts">
 import { use } from 'echarts/core'
 import { DataZoomComponent, GridComponent, LegendComponent, MarkAreaComponent, MarkLineComponent, TooltipComponent } from 'echarts/components'
-import { LineChart } from 'echarts/charts'
+import { BarChart, LineChart, PieChart } from 'echarts/charts'
 import { CanvasRenderer } from 'echarts/renderers'
 import VChart from 'vue-echarts'
 import type { EChartsOption } from 'echarts'
@@ -27,6 +27,8 @@ export interface ChartClickEvent {
 use([
   CanvasRenderer,
   LineChart,
+  BarChart,
+  PieChart,
   GridComponent,
   TooltipComponent,
   LegendComponent,
