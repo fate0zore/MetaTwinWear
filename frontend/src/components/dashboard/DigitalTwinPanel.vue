@@ -1,5 +1,11 @@
 <template>
-  <DashboardPanel class="digital-twin-panel" title="刀具实时加工数字孪生" :icon="Grid" :no-padding="true">
+  <DashboardPanel
+    class="digital-twin-panel"
+    title="刀具实时加工数字孪生"
+    :icon="Grid"
+    :no-padding="true"
+    :style="twinPanelStyle"
+  >
     <div id="twin-stage" ref="twinStageRef" class="twin-stage" :style="twinStageStyle">
       <div class="twin-media">
         <video
@@ -148,6 +154,14 @@ const twinStageStyle = computed(() => {
     height: `${height}px`,
     maxHeight: `${height}px`,
     minHeight: `${stageHeightBounds.value.min}px`,
+  }
+})
+const twinPanelStyle = computed(() => {
+  if (manualStageHeight.value === null) return undefined
+  const stageHeight = clampStageHeight(manualStageHeight.value)
+  return {
+    flex: '0 0 auto',
+    height: `calc(${stageHeight}px + var(--twin-panel-chrome-height, 45px))`,
   }
 })
 const videoStatusText = computed(() => {

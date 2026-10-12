@@ -656,19 +656,29 @@ function updateTwinStageCap() {
   const twin = center?.querySelector<HTMLElement>('.digital-twin-panel')
   const twinHeading = twin?.querySelector<HTMLElement>('.panel-heading')
   const processPanel = center?.querySelector<HTMLElement>('.process-parameter-panel')
-  if (!center || !twin || !twinHeading || !processPanel) return
+  const wearPanel = center?.querySelector<HTMLElement>('.left-wear-evolution')
+  if (!center || !twin || !twinHeading) return
 
   const isCompactDesktop = window.innerWidth < 1280
   const expandedProcessHeight = isCompactDesktop ? 360 : 200
-  // 折叠后按标题栏实际高度计算视频区空间，展开时仍保留原工艺图表高度。
-  const processHeight = processPanel.classList.contains('is-collapsed')
-    ? processPanel.getBoundingClientRect().height
-    : expandedProcessHeight
-  const available = window.innerHeight - twin.getBoundingClientRect().top
-    - twinHeading.getBoundingClientRect().height - 10 - processHeight - 9
+  // Reserve space for panels below the twin, including the wear panel that currently replaces the process chart.
+  const processHeight = processPanel
+    ? processPanel.classList.contains('is-collapsed')
+      ? processPanel.getBoundingClientRect().height
+      : expandedProcessHeight
+    : 0
+  const wearPanelHeight = wearPanel
+    ? Math.max(180, Number.parseFloat(getComputedStyle(wearPanel).minHeight) || 0)
+    : 0
+  const lowerPanelCount = Number(Boolean(processPanel)) + Number(Boolean(wearPanel))
+  const centerGap = Number.parseFloat(getComputedStyle(center).rowGap) || 0
+  const lowerPanelsHeight = processHeight + wearPanelHeight + centerGap * lowerPanelCount
+  const resizerHeight = 8
+  const available = center.getBoundingClientRect().bottom - twin.getBoundingClientRect().top
+    - twinHeading.getBoundingClientRect().height - resizerHeight - lowerPanelsHeight
   const minimumStageHeight = isCompactDesktop ? 170 : 255
   center.style.setProperty('--process-panel-viewport-height', `${expandedProcessHeight}px`)
-  center.style.setProperty('--twin-stage-viewport-cap', `${Math.max(minimumStageHeight, Math.floor(available) - 24)}px`)
+  center.style.setProperty('--twin-stage-viewport-cap', `${Math.max(minimumStageHeight, Math.floor(available))}px`)
 }
 
 function getSignalGridHeight(grid: HTMLElement): number {
@@ -732,8 +742,11 @@ onMounted(() => {
   window.addEventListener('storage', syncConfigurationFromOtherTab)
   resizeObserver = new ResizeObserver(scheduleLayout)
   columnResizeObserver = new ResizeObserver(handleDashboardGridResize)
+  const center = centerColumnRef.value
+  const twinPanel = center?.querySelector<HTMLElement>('.digital-twin-panel')
+  const wearPanel = center?.querySelector<HTMLElement>('.left-wear-evolution')
   const processPanel = centerColumnRef.value?.querySelector<HTMLElement>('.process-parameter-panel')
-  for (const element of [signalHeadingRef.value, signalGridRef.value, processPanel]) {
+  for (const element of [center, twinPanel, wearPanel, signalHeadingRef.value, signalGridRef.value, processPanel]) {
     if (element) resizeObserver.observe(element)
   }
   if (dashboardGridRef.value) columnResizeObserver.observe(dashboardGridRef.value)

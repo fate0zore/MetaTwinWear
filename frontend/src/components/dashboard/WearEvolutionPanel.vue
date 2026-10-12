@@ -1,11 +1,20 @@
 <template>
   <DashboardPanel v-bind="$attrs" title="刀具局部磨损演化" :icon="Picture" :no-padding="true">
-    <div class="wear-sampling-head">
-      <span>历史磨损数据</span>
-      <strong :class="`wear-stage--${currentWearStage.code}`">窗口：6 · 当前阶段：{{ currentWearStage.label }}</strong>
-    </div>
+    <template #actions>
+      <span class="wear-panel-status" :class="`wear-stage--${currentWearStage.code}`">
+        窗口：6 · 当前阶段：{{ currentWearStage.label }}
+      </span>
+    </template>
 
-    <div class="wear-evolution-content">
+    <!-- <div class="wear-sampling-head">
+      <span>历史磨损数据</span>
+    </div> -->
+
+    <div
+      ref="wearEvolutionContentRef"
+      class="wear-evolution-content"
+      :class="{ 'is-two-column-preview': useTwoColumnPreview }"
+    >
       <div class="wear-sampling-strip" role="list" aria-label="历史磨损采样">
         <button
           v-for="sample in samples"
@@ -29,21 +38,39 @@
             ref="detailImageRef"
             type="button"
             class="wear-detail-image"
-            :style="getSampleImageStyle(selectedSample)"
+            :style="getSampleImageStyle(selectedSample, 'contain')"
             :aria-label="`查看完整磨损图像，采样时间 ${selectedSample.time}，磨损 ${selectedSample.wear.toFixed(2)} mm`"
             title="点击放大查看"
             @click="openPreview"
           ></button>
-          <div class="wear-detail-caption">
-            <span>完整磨损图像</span>
-            <small>采样时间：{{ selectedSample.time }}</small>
+          <div class="wear-detail-info">
+            <div class="wear-detail-caption">
+              <span>采样参数</span>
+              <small>{{ selectedSample.time }}</small>
+            </div>
+            <dl class="wear-detail-metrics">
+              <div>
+                <dt>样本磨损量</dt>
+                <dd>{{ selectedSample.wear.toFixed(2) }} mm</dd>
+              </div>
+              <div>
+                <dt>当前磨损</dt>
+                <dd>{{ store.wear.currentWear.toFixed(2) }} mm</dd>
+              </div>
+              <div>
+                <dt>磨损阈值</dt>
+                <dd>{{ store.wear.threshold.toFixed(2) }} mm</dd>
+              </div>
+              <div>
+                <dt>样本阶段</dt>
+                <dd :class="`wear-stage--${selectedWearStage.code}`">{{ selectedWearStage.label }}</dd>
+              </div>
+              <div class="wear-detail-life">
+                <dt>预计剩余寿命</dt>
+                <dd>{{ store.wear.remainingLife.toFixed(1) }} min</dd>
+              </div>
+            </dl>
           </div>
-        </div>
-
-        <div class="wear-current-info">
-          <span>当前磨损</span>
-          <strong>{{ selectedSample.wear.toFixed(2) }} mm</strong>
-          <small>悬停上方缩略图查看对应采样</small>
         </div>
       </div>
     </div>
@@ -119,8 +146,11 @@ const testWearImages = [earlierWearImage, earlierWearImage, earlierWearImage, la
 
 const selectedSampleId = ref<string | null>(null)
 const detailImageRef = ref<HTMLButtonElement | null>(null)
+const wearEvolutionContentRef = ref<HTMLElement | null>(null)
 const previewVisible = ref(false)
 const previewDimensions = ref({ width: 0, height: 0 })
+const useTwoColumnPreview = ref(false)
+let wearEvolutionResizeObserver: ResizeObserver | null = null
 
 const samples = computed<WearSample[]>(() => {
   const history = store.wearHistory.slice(-6)
@@ -147,6 +177,7 @@ const selectedSampleIndex = computed(() => {
 const selectedSample = computed<WearSample>(() => {
   return samples.value[selectedSampleIndex.value] ?? emptySample
 })
+const selectedWearStage = computed(() => classifyWearStage(selectedSample.value.wear, store.wear.threshold))
 
 const canNavigatePrevious = computed(() => selectedSampleIndex.value > 0)
 const canNavigateNext = computed(() => selectedSampleIndex.value >= 0 && selectedSampleIndex.value < samples.value.length - 1)
@@ -195,6 +226,23 @@ function handleViewportResize() {
   if (previewVisible.value) updatePreviewDimensions()
 }
 
-onMounted(() => window.addEventListener('resize', handleViewportResize))
-onBeforeUnmount(() => window.removeEventListener('resize', handleViewportResize))
+function updateThumbnailLayout() {
+  const bounds = wearEvolutionContentRef.value?.getBoundingClientRect()
+  useTwoColumnPreview.value = Boolean(bounds && bounds.width > 0 && bounds.height > 0 && bounds.width / bounds.height >= 1.8)
+}
+
+onMounted(() => {
+  window.addEventListener('resize', handleViewportResize)
+  updateThumbnailLayout()
+  if (wearEvolutionContentRef.value) {
+    // Observe the thumbnail region's immediate parent so container resizing is reflected without a viewport breakpoint.
+    wearEvolutionResizeObserver = new ResizeObserver(updateThumbnailLayout)
+    wearEvolutionResizeObserver.observe(wearEvolutionContentRef.value)
+  }
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleViewportResize)
+  wearEvolutionResizeObserver?.disconnect()
+})
 </script>
