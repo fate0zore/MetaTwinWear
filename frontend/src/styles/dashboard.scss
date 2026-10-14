@@ -1078,6 +1078,17 @@
   padding: 0 10px;
 }
 
+.wear-evolution-empty {
+  display: grid;
+  grid-column: 1 / -1;
+  min-height: 72px;
+  place-items: center;
+  border: 1px dashed rgba(24, 132, 177, .45);
+  color: #78a5b7;
+  background: rgba(3, 28, 45, .4);
+  font-size: 12px;
+}
+
 .wear-sampling-strip {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
