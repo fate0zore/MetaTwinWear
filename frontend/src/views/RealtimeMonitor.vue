@@ -10,9 +10,6 @@
         </div> -->
         <div class="monitor-summary-grid" :style="{ '--summary-columns': summaryColumns }">
           <div v-for="item in summaryItems" :key="item.label" class="monitor-summary-item">
-            <el-icon :size="20" class="monitor-summary-icon" :class="`is-${item.tone}`" aria-hidden="true">
-              <component :is="item.icon" />
-            </el-icon>
             <div class="monitor-summary-copy">
               <div class="monitor-summary-label">{{ item.label }}</div>
               <div class="monitor-summary-value"><strong>{{ item.value }}</strong><span v-if="item.unit">{{ item.unit }}</span></div>
@@ -22,9 +19,6 @@
         <div class="process-monitor-card">
           <div class="process-monitor-grid">
             <div v-for="item in processParameterItems" :key="item.label" class="monitor-summary-item">
-              <el-icon :size="20" class="monitor-summary-icon" :class="`is-${item.tone}`" aria-hidden="true">
-                <component :is="item.icon" />
-              </el-icon>
               <div class="monitor-summary-copy">
                 <div class="monitor-summary-label">{{ item.label }}</div>
                 <div class="monitor-summary-value">
@@ -51,14 +45,14 @@
                 :disabled="store.dataSource === 'api' && store.apiConnection !== 'connected'"
                 @click="toggleMonitoring"
               >
-                <el-icon><VideoPlay /></el-icon>{{ store.monitoring ? '停止监听' : '开始监听' }}
+                {{ store.monitoring ? '停止监听' : '开始监听' }}
               </el-button>
               <el-button
                 class="reset-button"
                 :disabled="store.dataSource === 'api' && store.apiConnection !== 'connected'"
                 @click="resetMonitoring"
               >
-                <el-icon><Refresh /></el-icon>重置
+                重置
               </el-button>
             </div>
           </div>
@@ -184,7 +178,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { Aim, CircleCheck, Clock, DataLine, Grid, Odometer, Refresh, TrendCharts, VideoPlay, WarningFilled } from '@element-plus/icons-vue'
+import { DataLine, Grid, TrendCharts } from '@element-plus/icons-vue'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useDashboardMock } from '@/composables/useDashboardMock'
 import { useDashboardApi } from '@/features/dashboard/composables/useDashboardApi'
@@ -208,36 +202,26 @@ const summaryItems = computed(() => [
     label: '加工时长',
     value: formatDuration(store.monitoringStatistics.machiningDurationSeconds),
     unit: '',
-    icon: Clock,
-    tone: 'time',
   },
   {
     label: '采样频率',
     value: String(store.monitoringStatistics.samplingFrequencyHz),
     unit: 'Hz',
-    icon: DataLine,
-    tone: 'success',
   },
   {
     label: '报警次数',
     value: String(store.monitoringStatistics.alarmCount),
     unit: '次',
-    icon: WarningFilled,
-    tone: 'warning',
   },
   {
     label: '正确识别次数',
     value: String(store.monitoringStatistics.correctRecognitionCount),
     unit: '次',
-    icon: CircleCheck,
-    tone: 'success',
   },
   {
     label: '平均状态监测误差',
     value: String(store.monitoringStatistics.averageMonitoringErrorMicrometers),
     unit: 'μm',
-    icon: Aim,
-    tone: 'error',
   },
 ])
 const processParameterItems = computed(() => [
@@ -245,29 +229,21 @@ const processParameterItems = computed(() => [
     label: '主轴转速',
     value: String(store.process.spindleSpeed),
     unit: 'rpm',
-    icon: Odometer,
-    tone: 'time',
   },
   {
     label: '进给速度',
     value: String(store.process.feedRate),
     unit: 'mm/min',
-    icon: TrendCharts,
-    tone: 'success',
   },
   {
     label: '切削深度',
     value: store.process.cuttingDepth.toFixed(1),
     unit: 'mm',
-    icon: Aim,
-    tone: 'warning',
   },
   {
     label: '切削宽度',
     value: store.process.cuttingWidth.toFixed(1),
     unit: 'mm',
-    icon: Grid,
-    tone: 'error',
   },
 ])
 const machineConnectionStatus = computed(() => {

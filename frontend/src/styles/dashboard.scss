@@ -30,11 +30,6 @@
 .monitor-summary-tag.el-tag { --el-tag-bg-color: color-mix(in srgb, var(--blue) 20%, transparent); --el-tag-border-color: color-mix(in srgb, var(--cyan) 35%, transparent); --el-tag-text-color: var(--cyan); font-size: 12px; }
 .monitor-summary-grid { display: grid; grid-template-columns: repeat(var(--summary-columns), minmax(0, 1fr)); gap: 6px; padding: 6px; }
 .monitor-summary-item { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 56px; padding: 6px 10px; border: 1px solid rgba(36, 129, 171, .28); background: rgba(5, 32, 52, .58); }
-.monitor-summary-icon { flex: 0 0 32px; width: 32px; height: 32px; border: 1px solid currentColor; border-radius: 4px; background: rgba(24, 200, 255, .06); }
-.monitor-summary-icon.is-time { color: var(--cyan); }
-.monitor-summary-icon.is-warning { color: var(--orange); }
-.monitor-summary-icon.is-success { color: var(--green); }
-.monitor-summary-icon.is-error { color: #72bfff; }
 .monitor-summary-copy { min-width: 0; }
 .monitor-summary-label { color: #81aabc; font-size: 12px; line-height: 1.5; }
 .monitor-summary-value { display: flex; align-items: baseline; gap: 4px; color: #b9f0ff; font-size: 14px; line-height: 1.45; white-space: nowrap; }
@@ -70,7 +65,6 @@
 @media (max-width: 520px) {
   .monitor-summary-grid { gap: 5px; padding: 5px; }
   .monitor-summary-item { gap: 8px; min-height: 54px; padding: 5px 8px; }
-  .monitor-summary-icon { flex-basis: 30px; width: 30px; height: 30px; }
   .monitor-summary-value strong { font-size: 15px; }
   .process-monitor-action { flex-direction: column; min-height: 80px; gap: 5px; padding: 5px 8px; }
   .process-monitor-action .el-button,
