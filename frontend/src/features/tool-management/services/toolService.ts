@@ -12,7 +12,7 @@ export const toolService = {
     const keyword = query.keyword.trim().toLocaleLowerCase()
     const filtered = toolInventory.filter((tool) => {
       const matchesType = query.type === 'all' || tool.type === query.type
-      const matchesKeyword = !keyword || `${tool.id} ${tool.name} ${tool.specification}`.toLocaleLowerCase().includes(keyword)
+      const matchesKeyword = !keyword || `${tool.id} ${tool.name} ${tool.model ?? ''} ${tool.type} ${tool.specification} ${tool.material} ${tool.coating} ${tool.applications ?? ''} ${tool.compatibleMaterials ?? ''}`.toLocaleLowerCase().includes(keyword)
       return matchesType && matchesKeyword
     })
     const start = (query.page - 1) * query.pageSize

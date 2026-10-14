@@ -4,6 +4,7 @@ import { cloneDashboardState } from '@/mock/dashboard'
 import type { ApiSnapshot, ConfigurationOptions, DashboardLogLevel, DashboardState, ProcessSample, SensorSeries, SignalChannel, TimePoint, ToolCatalogItem, ToolConfig, WorkpieceConfig } from '@/types/dashboard'
 import { classifyWearStage } from '@/features/dashboard/wearStages'
 import { normalizeWorkpieceSize } from '@/features/dashboard/workpieceDimensions'
+import { findToolProduct, toMockToolConfig } from '@/features/tool-management/mock/catalog'
 
 const nextPoint = (lastValue: number, index: number, drift = 0, amplitude = 1): number =>
   Number((lastValue + Math.sin(index * 1.27) * amplitude * 0.48 + (Math.random() - 0.5) * amplitude + drift).toFixed(2))
@@ -80,12 +81,12 @@ function normalizeStoredConfiguration(value: unknown, state: DashboardState): {
   const normalizedWorkpieceMaterial = typeof workpiece.material === 'string'
     ? workpiece.material.trim()
     : ''
-  if (typeof tool.model !== 'string' || typeof tool.type !== 'string'
-    || typeof tool.diameter !== 'number' || typeof tool.length !== 'number'
-    || typeof tool.toothCount !== 'number' || typeof tool.material !== 'string'
+  if (typeof tool.model !== 'string'
     || normalizedWorkpieceSize === null || !normalizedWorkpieceMaterial) return null
 
   if (state.dataSource === 'api') {
+    if (typeof tool.diameter !== 'number' || typeof tool.length !== 'number'
+      || typeof tool.toothCount !== 'number') return null
     const item = state.toolCatalog.find((candidate) => candidate.model === tool.model)
     if (!item) return null
     return {
@@ -101,22 +102,11 @@ function normalizeStoredConfiguration(value: unknown, state: DashboardState): {
     }
   }
 
-  if (!state.configOptions.toolModels.includes(tool.model)
-    || !state.configOptions.toolTypes.includes(tool.type)
-    || !state.configOptions.diameters.includes(tool.diameter)
-    || !state.configOptions.lengths.includes(tool.length)
-    || !state.configOptions.toothCounts.includes(tool.toothCount)
-    || !state.configOptions.materials.includes(tool.material)) return null
+  const product = findToolProduct(tool.model)
+  if (!product) return null
 
   return {
-    tool: {
-      model: tool.model,
-      type: tool.type,
-      diameter: tool.diameter,
-      length: tool.length,
-      toothCount: tool.toothCount,
-      material: tool.material,
-    },
+    tool: toMockToolConfig(product),
     workpiece: { size: normalizedWorkpieceSize, material: normalizedWorkpieceMaterial },
   }
 }
@@ -270,6 +260,12 @@ export const useDashboardStore = defineStore('dashboard', {
         toothCount: item.toothCount,
         material: item.material,
       }
+      return true
+    },
+    selectMockTool(model: string) {
+      const product = findToolProduct(model)
+      if (!product) return false
+      this.tool = toMockToolConfig(product)
       return true
     },
     dismissAlert() {

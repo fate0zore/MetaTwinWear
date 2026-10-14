@@ -6,13 +6,19 @@ export type RecommendationTone = 'success' | 'warning' | 'danger' | 'info' | `st
 export interface ToolConfig {
   model: string
   type: string
-  diameter: number
-  length: number
-  toothCount: number
+  diameter: number | null
+  length: number | null
+  toothCount: number | null
   material: string
 }
 
-export interface ToolCatalogItem extends ToolConfig {
+export interface ApiToolConfig extends ToolConfig {
+  diameter: number
+  length: number
+  toothCount: number
+}
+
+export interface ToolCatalogItem extends ApiToolConfig {
   description: string
   imageUrl: string
 }
@@ -161,7 +167,7 @@ export interface ApiSnapshot {
   sequence: number
   monitoring: boolean
   sampledAt: string
-  tool: ToolConfig
+  tool: ApiToolConfig
   workpiece: WorkpieceConfig
   process: ProcessParams
   wear: WearState

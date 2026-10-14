@@ -1,6 +1,6 @@
 export type ToolUsageStatus = 'in-use' | 'standby' | 'service'
 export type ToolWearStage = 'normal' | 'warning' | 'replace'
-export type ToolType = '立铣刀' | '球头铣刀' | '面铣刀' | '钻头'
+export type ToolType = '铣刀片' | '铣刀' | '车刀'
 
 export interface ToolTrendPoint {
   at: string
@@ -10,10 +10,15 @@ export interface ToolTrendPoint {
 export interface ToolRecord {
   id: string
   name: string
+  model?: string
   type: ToolType
   specification: string
   material: string
+  coatingLabel?: string
   coating: string
+  applications?: string
+  compatibleMaterials?: string
+  sourceUrl?: string
   loadedAt: string
   mileageKm: number
   lastUsedAt: string

@@ -29,7 +29,7 @@
               <el-option label="全部类型" value="all" />
               <el-option v-for="type in toolTypes" :key="type" :label="type" :value="type" />
             </el-select>
-            <el-input :model-value="state.keyword.value" clearable placeholder="搜索名称或编号" @update:model-value="state.setKeyword" @keyup.enter="state.reload">
+            <el-input :model-value="state.keyword.value" clearable placeholder="搜索型号、名称或编号" @update:model-value="state.setKeyword" @keyup.enter="state.reload">
               <template #prefix><el-icon><Search /></el-icon></template>
             </el-input>
             <el-button type="primary" :icon="Plus" @click="addVisible = true">新增刀具</el-button>
@@ -37,7 +37,7 @@
           <div v-loading="state.loading.value" class="table-wrap">
               <el-table v-if="state.items.value.length" :data="state.items.value" row-key="id" :row-class-name="rowClass" @row-click="handleRowClick">
               <el-table-column label="刀具" min-width="176">
-                <template #default="{ row }"><div class="tool-name-cell"><img :src="row.imageUrl" :alt="`${row.name}示意图`" /><span><strong>{{ row.name }}</strong><small>{{ row.id }}</small></span></div></template>
+                <template #default="{ row }"><div class="tool-name-cell"><img :src="row.imageUrl" :alt="`${row.model ?? row.name}示意图`" /><span><strong>{{ row.name }}</strong><small>{{ row.type }} · {{ row.model ?? row.id }}</small></span></div></template>
               </el-table-column>
               <el-table-column label="规格" min-width="132"><template #default="{ row }">{{ row.specification }}</template></el-table-column>
               <el-table-column label="磨损" width="102"><template #default="{ row }">{{ row.wearMm.toFixed(2) }} mm</template></el-table-column>
@@ -79,7 +79,7 @@
             <div class="info-grid">
               <div v-for="field in toolFields" :key="field.label" class="info-row"><span>{{ field.label }}</span><strong>{{ field.value(state.selectedTool.value) }}</strong></div>
             </div>
-            <div class="info-foot"><el-tag :type="usageTagType(state.selectedTool.value.usageStatus)" effect="plain">{{ usageLabel(state.selectedTool.value.usageStatus) }}</el-tag><span>磨损阈值 {{ state.selectedTool.value.wearThresholdMm.toFixed(2) }} mm</span></div>
+            <div class="info-foot"><el-tag :type="usageTagType(state.selectedTool.value.usageStatus)" effect="plain">{{ usageLabel(state.selectedTool.value.usageStatus) }}</el-tag><span>磨损阈值 {{ state.selectedTool.value.wearThresholdMm.toFixed(2) }} mm</span><a v-if="state.selectedTool.value.sourceUrl" :href="state.selectedTool.value.sourceUrl" target="_blank" rel="noreferrer">Sandvik 产品资料</a></div>
           </template>
           <el-empty v-else description="先从列表选择刀具" :image-size="76" />
         </DashboardPanel>
@@ -141,10 +141,11 @@ import ToolTrendChart from '@/features/tool-management/components/ToolTrendChart
 import { useToolManagement } from '@/features/tool-management/composables/useToolManagement'
 import type { ModuleStatItem } from '@/shared/components/ModuleStats.vue'
 import type { NewToolInput, ToolRecord, ToolType } from '@/features/tool-management/types'
+import { mockToolTypes } from '@/features/tool-management/mock/catalog'
 import cutterToolImage from '@/assets/modules/cutter-tool.svg'
 
 const state = useToolManagement()
-const toolTypes: ToolType[] = ['立铣刀', '球头铣刀', '面铣刀', '钻头']
+const toolTypes = mockToolTypes
 const addVisible = ref(false)
 const adding = ref(false)
 const imageFailed = ref(false)
@@ -361,7 +362,7 @@ function handleWindowResize(): void {
   syncToolListWidthForViewport()
 }
 
-const form = reactive<NewToolInput>({ name: '', type: '立铣刀', specification: '', material: '硬质合金', coating: 'TiAlN 涂层', imageUrl: cutterToolImage })
+const form = reactive<NewToolInput>({ name: '', type: '铣刀', specification: '', material: '硬质合金', coating: '无', imageUrl: cutterToolImage })
 const rules: FormRules<NewToolInput> = {
   name: [{ required: true, message: '请输入刀具名称', trigger: 'blur' }],
   type: [{ required: true, message: '请选择刀具类型', trigger: 'change' }],
@@ -391,11 +392,14 @@ const statItems = computed<ModuleStatItem[]>(() => [
 ])
 const toolFields = computed(() => state.selectedTool.value ? [
   { label: '刀具编号', value: (tool: ToolRecord) => tool.id },
+  ...(state.selectedTool.value.model ? [{ label: '产品型号', value: (tool: ToolRecord) => tool.model ?? '—' }] : []),
   { label: '刀具名称', value: (tool: ToolRecord) => tool.name },
   { label: '刀具类型', value: (tool: ToolRecord) => tool.type },
   { label: '刀具规格', value: (tool: ToolRecord) => tool.specification },
   { label: '刀具材质', value: (tool: ToolRecord) => tool.material },
-  { label: '涂层类型', value: (tool: ToolRecord) => tool.coating },
+  { label: state.selectedTool.value.coatingLabel ?? '涂层类型', value: (tool: ToolRecord) => tool.coating },
+  ...(state.selectedTool.value.compatibleMaterials ? [{ label: '适用材质', value: (tool: ToolRecord) => tool.compatibleMaterials ?? '—' }] : []),
+  ...(state.selectedTool.value.applications ? [{ label: '适用加工', value: (tool: ToolRecord) => tool.applications ?? '—' }] : []),
   { label: '装载时间', value: (tool: ToolRecord) => tool.loadedAt },
   { label: '加工里程', value: (tool: ToolRecord) => `${tool.mileageKm.toLocaleString()} km` },
   { label: '上次使用', value: (tool: ToolRecord) => tool.lastUsedAt },

@@ -1,16 +1,17 @@
 import type { ConfigurationOptions, DashboardState, MonitoringStatistics, ProcessSample, SensorSeries, SignalChannel, TimePoint } from '@/types/dashboard'
 import { classifyWearStage } from '@/features/dashboard/wearStages'
+import { findToolProduct, mockToolTypes, toMockToolConfig, toolProductCatalog } from '@/features/tool-management/mock/catalog'
 import machiningVideo from '@/assets/dashboard/数控铣床用可转位刀具粗切削注射模镶件.mp4'
 
 const pointCount = 42
 
 export const mockConfigurationOptions: ConfigurationOptions = {
-  toolModels: ['Φ12 立铣刀（硬质合金）', 'Φ10 立铣刀（硬质合金）', 'Φ16 球头铣刀（硬质合金）'],
-  toolTypes: ['立铣刀', '球头铣刀', '键槽铣刀'],
-  diameters: [8, 10, 12, 16],
-  lengths: [50, 75, 100, 125],
-  toothCounts: [2, 3, 4, 6],
-  materials: ['硬质合金', '高速钢', '陶瓷合金'],
+  toolModels: toolProductCatalog.map((item) => item.model),
+  toolTypes: mockToolTypes,
+  diameters: [...new Set(toolProductCatalog.flatMap((item) => item.diameter === undefined ? [] : [item.diameter]))].sort((a, b) => a - b),
+  lengths: [...new Set(toolProductCatalog.flatMap((item) => item.length === undefined ? [] : [item.length]))].sort((a, b) => a - b),
+  toothCounts: [...new Set(toolProductCatalog.flatMap((item) => item.toothCount === undefined ? [] : [item.toothCount]))].sort((a, b) => a - b),
+  materials: [...new Set(toolProductCatalog.map((item) => item.material))],
   workpieceSizes: ['80 × 60 × 40', '120 × 80 × 50', '160 × 100 × 60'],
   workpieceMaterials: ['镍基高温合金 (Inconel 718)', '钛合金 (TC4)', '铝合金 (7075)', '模具钢 (S136)'],
 }
@@ -22,6 +23,8 @@ export const mockMonitoringStatistics: MonitoringStatistics = {
   correctRecognitionCount: 11,
   averageMonitoringErrorMicrometers: 8,
 }
+
+const defaultLocalTool = findToolProduct('2F366-1200-050-TD 1745')!
 
 const timeLabel = (index: number) => `${String(Math.floor(index / 2)).padStart(2, '0')}:${String((index % 2) * 30).padStart(2, '0')}`
 
@@ -58,14 +61,7 @@ const processHistory: ProcessSample[] = Array.from({ length: pointCount }, (_, i
 }))
 
 export const initialDashboardState: DashboardState = {
-  tool: {
-    model: 'Φ12 立铣刀（硬质合金）',
-    type: '立铣刀',
-    diameter: 12,
-    length: 75,
-    toothCount: 4,
-    material: '硬质合金',
-  },
+  tool: toMockToolConfig(defaultLocalTool),
   process: {
     spindleSpeed: 12000,
     feedRate: 800,

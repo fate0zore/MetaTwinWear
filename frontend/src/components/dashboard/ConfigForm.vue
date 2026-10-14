@@ -5,11 +5,10 @@
     </template>
 
     <div class="readonly-section-title"><el-icon><Aim /></el-icon> 刀具信息</div>
-    <div class="parameter-display-list">
+    <div v-if="store.dataSource === 'api'" class="parameter-display-list">
       <div class="parameter-display-row">
         <span>刀具型号</span>
         <el-select
-          v-if="store.dataSource === 'api'"
           v-model="store.tool.model"
           class="parameter-display-select"
           popper-class="dashboard-select-popper tool-catalog-select-popper"
@@ -26,62 +25,40 @@
             </div>
           </el-option>
         </el-select>
+      </div>
+      <div class="parameter-display-row"><span>刀具类型</span><el-select :model-value="store.tool.type" class="parameter-display-select" disabled popper-class="dashboard-select-popper" aria-label="刀具类型（只读）"><el-option v-for="item in options.toolTypes" :key="item" :label="item" :value="item" /></el-select></div>
+      <div class="parameter-display-row"><span>刀具直径 (mm)</span><el-select :model-value="store.tool.diameter" class="parameter-display-select" disabled popper-class="dashboard-select-popper" aria-label="刀具直径（只读）"><el-option v-for="item in options.diameters" :key="item" :label="String(item)" :value="item" /></el-select></div>
+      <div class="parameter-display-row"><span>刀具长度 (mm)</span><el-select :model-value="store.tool.length" class="parameter-display-select" disabled popper-class="dashboard-select-popper" aria-label="刀具长度（只读）"><el-option v-for="item in options.lengths" :key="item" :label="String(item)" :value="item" /></el-select></div>
+      <div class="parameter-display-row"><span>刀齿数量</span><el-select :model-value="store.tool.toothCount" class="parameter-display-select" disabled popper-class="dashboard-select-popper" aria-label="刀齿数量（只读）"><el-option v-for="item in options.toothCounts" :key="item" :label="String(item)" :value="item" /></el-select></div>
+      <div class="parameter-display-row"><span>刀具材料</span><el-select :model-value="store.tool.material" class="parameter-display-select" disabled popper-class="dashboard-select-popper" aria-label="刀具材料（只读）"><el-option v-for="item in options.materials" :key="item" :label="item" :value="item" /></el-select></div>
+    </div>
+    <div v-else class="parameter-display-list">
+      <div class="parameter-display-row">
+        <span>刀具型号</span>
         <el-select
-          v-else
           v-model="store.tool.model"
           class="parameter-display-select"
+          popper-class="dashboard-select-popper tool-catalog-select-popper"
           filterable
-          popper-class="dashboard-select-popper"
-          @change="emit('configurationChange')"
+          :filter-method="filterLocalToolOptions"
+          placeholder="输入型号、名称或类别搜索"
+          no-data-text="未找到匹配刀具"
+          @change="handleMockToolSelected"
         >
-          <el-option v-for="item in options.toolModels" :key="item" :label="item" :value="item" />
+          <el-option v-for="item in filteredLocalTools" :key="item.model" :label="item.model" :value="item.model">
+            <div class="tool-catalog-option">
+              <strong>{{ item.model }}</strong>
+              <small>{{ item.name }} · {{ item.type }} · {{ item.specification }}</small>
+            </div>
+          </el-option>
         </el-select>
       </div>
-      <div class="parameter-display-row">
-        <span>刀具类型</span>
-        <el-select v-if="store.dataSource === 'api'" :model-value="store.tool.type" class="parameter-display-select" disabled popper-class="dashboard-select-popper" aria-label="刀具类型（只读）">
-          <el-option v-for="item in options.toolTypes" :key="item" :label="item" :value="item" />
-        </el-select>
-        <el-select v-else v-model="store.tool.type" class="parameter-display-select" filterable popper-class="dashboard-select-popper" @change="emit('configurationChange')">
-          <el-option v-for="item in options.toolTypes" :key="item" :label="item" :value="item" />
-        </el-select>
-      </div>
-      <div class="parameter-display-row">
-        <span>刀具直径 (mm)</span>
-        <el-select v-if="store.dataSource === 'api'" :model-value="store.tool.diameter" class="parameter-display-select" disabled popper-class="dashboard-select-popper" aria-label="刀具直径（只读）">
-          <el-option v-for="item in options.diameters" :key="item" :label="String(item)" :value="item" />
-        </el-select>
-        <el-select v-else v-model="store.tool.diameter" class="parameter-display-select" filterable popper-class="dashboard-select-popper" @change="emit('configurationChange')">
-          <el-option v-for="item in options.diameters" :key="item" :label="String(item)" :value="item" />
-        </el-select>
-      </div>
-      <div class="parameter-display-row">
-        <span>刀具长度 (mm)</span>
-        <el-select v-if="store.dataSource === 'api'" :model-value="store.tool.length" class="parameter-display-select" disabled popper-class="dashboard-select-popper" aria-label="刀具长度（只读）">
-          <el-option v-for="item in options.lengths" :key="item" :label="String(item)" :value="item" />
-        </el-select>
-        <el-select v-else v-model="store.tool.length" class="parameter-display-select" filterable popper-class="dashboard-select-popper" @change="emit('configurationChange')">
-          <el-option v-for="item in options.lengths" :key="item" :label="String(item)" :value="item" />
-        </el-select>
-      </div>
-      <div class="parameter-display-row">
-        <span>刀齿数量</span>
-        <el-select v-if="store.dataSource === 'api'" :model-value="store.tool.toothCount" class="parameter-display-select" disabled popper-class="dashboard-select-popper" aria-label="刀齿数量（只读）">
-          <el-option v-for="item in options.toothCounts" :key="item" :label="String(item)" :value="item" />
-        </el-select>
-        <el-select v-else v-model="store.tool.toothCount" class="parameter-display-select" filterable popper-class="dashboard-select-popper" @change="emit('configurationChange')">
-          <el-option v-for="item in options.toothCounts" :key="item" :label="String(item)" :value="item" />
-        </el-select>
-      </div>
-      <div class="parameter-display-row">
-        <span>刀具材料</span>
-        <el-select v-if="store.dataSource === 'api'" :model-value="store.tool.material" class="parameter-display-select" disabled popper-class="dashboard-select-popper" aria-label="刀具材料（只读）">
-          <el-option v-for="item in options.materials" :key="item" :label="item" :value="item" />
-        </el-select>
-        <el-select v-else v-model="store.tool.material" class="parameter-display-select" filterable popper-class="dashboard-select-popper" @change="emit('configurationChange')">
-          <el-option v-for="item in options.materials" :key="item" :label="item" :value="item" />
-        </el-select>
-      </div>
+      <div class="parameter-display-row"><span>刀具类型</span><strong class="parameter-display-value">{{ localSelectedTool?.type ?? '—' }}</strong></div>
+      <div class="parameter-display-row"><span>官方规格</span><strong class="parameter-display-value">{{ localSelectedTool?.specification ?? '—' }}</strong></div>
+      <div class="parameter-display-row"><span>刀具材质</span><strong class="parameter-display-value">{{ localSelectedTool?.material ?? '—' }}</strong></div>
+      <div class="parameter-display-row"><span>{{ localSelectedTool?.coatingLabel ?? '牌号 / 涂层' }}</span><strong class="parameter-display-value">{{ localSelectedTool?.coating ?? '—' }}</strong></div>
+      <div class="parameter-display-row"><span>适用材质</span><strong class="parameter-display-value">{{ localSelectedTool?.compatibleMaterials ?? '—' }}</strong></div>
+      <div class="parameter-display-row"><span>适用加工</span><strong class="parameter-display-value">{{ localSelectedTool?.applications ?? '—' }}</strong></div>
     </div>
 
     <div class="readonly-section-title"><el-icon><Box /></el-icon> 工件信息</div>
@@ -128,20 +105,22 @@
     </div>
 
     <div class="tool-preview-card">
-      <div class="tool-photo" :class="{ 'reference-crop': store.dataSource === 'mock', 'tool-catalog-image': store.dataSource === 'api' }" :style="store.dataSource === 'mock' ? referenceStyle : undefined">
+      <div class="tool-photo tool-catalog-image">
         <img
-          v-if="store.dataSource === 'api' && selectedTool && !imageFailed"
-          :key="selectedTool.imageUrl"
-          :src="selectedTool.imageUrl"
-          :alt="`${selectedTool.model} 刀具主图`"
+          v-if="displayedToolImage && !imageFailed"
+          :key="displayedToolImage"
+          :src="displayedToolImage"
+          :alt="`${store.tool.model} 刀具主图`"
           @error="imageFailed = true"
         >
-        <span v-else-if="store.dataSource === 'api'" class="tool-image-feedback" role="img" aria-label="刀具图片暂不可用">刀具图片暂不可用</span>
+        <span v-else class="tool-image-feedback" role="img" aria-label="刀具图片暂不可用">刀具图片暂不可用</span>
       </div>
       <div class="tool-preview-copy">
         <strong>{{ store.tool.model }}</strong>
-        <span>{{ store.tool.material }} · {{ store.tool.toothCount }} 齿</span>
+        <span v-if="store.dataSource === 'api'">{{ store.tool.material }} · {{ store.tool.toothCount }} 齿</span>
+        <span v-else>{{ localSelectedTool?.name }} · {{ localSelectedTool?.type }}</span>
         <small v-if="store.dataSource === 'api' && selectedTool">{{ selectedTool.description }}</small>
+        <small v-else-if="localSelectedTool">{{ localSelectedTool.specification }} · {{ localSelectedTool.coatingLabel }}：{{ localSelectedTool.coating }} · {{ localSelectedTool.compatibleMaterials }}</small>
       </div>
     </div>
 
@@ -166,20 +145,22 @@
 import { computed, ref, watch } from 'vue'
 import { Aim, Box, Tools } from '@element-plus/icons-vue'
 
-import referenceDesign from '@/assets/dashboard/reference-design.png'
 import DashboardPanel from './DashboardPanel.vue'
 import { normalizeWorkpieceSize } from '@/features/dashboard/workpieceDimensions'
+import { findToolProduct, toolProductCatalog } from '@/features/tool-management/mock/catalog'
 import { useDashboardStore } from '@/stores/dashboard'
 
 const emit = defineEmits<{ retry: []; configurationChange: [] }>()
 const store = useDashboardStore()
-const referenceStyle = computed(() => ({ backgroundImage: `url(${referenceDesign})` }))
 const lastUpdated = computed(() => store.dataSource === 'api' && store.sampledAt
   ? new Date(store.sampledAt).toLocaleTimeString('zh-CN')
   : store.processHistory[store.processHistory.length - 1]?.time ?? '--:--')
 const options = computed(() => store.configOptions)
 const selectedTool = computed(() => store.toolCatalog.find((item) => item.model === store.tool.model) ?? null)
+const localSelectedTool = computed(() => findToolProduct(store.tool.model) ?? null)
+const displayedToolImage = computed(() => store.dataSource === 'api' ? selectedTool.value?.imageUrl ?? '' : localSelectedTool.value?.imageUrl ?? '')
 const toolSearch = ref('')
+const localToolSearch = ref('')
 const imageFailed = ref(false)
 const workpieceSizeError = ref('')
 const workpieceMaterialError = ref('')
@@ -188,8 +169,13 @@ const filteredTools = computed(() => {
   if (!query) return store.toolCatalog
   return store.toolCatalog.filter((item) => `${item.model} ${item.description} ${item.diameter}`.toLocaleLowerCase().includes(query))
 })
+const filteredLocalTools = computed(() => {
+  const query = localToolSearch.value.trim().toLocaleLowerCase()
+  if (!query) return toolProductCatalog
+  return toolProductCatalog.filter((item) => `${item.model} ${item.name} ${item.type} ${item.specification} ${item.compatibleMaterials}`.toLocaleLowerCase().includes(query))
+})
 
-watch(() => selectedTool.value?.imageUrl, () => { imageFailed.value = false })
+watch(displayedToolImage, () => { imageFailed.value = false })
 watch(() => store.workpiece.size, () => { workpieceSizeError.value = '' })
 watch(() => store.workpiece.material, () => { workpieceMaterialError.value = '' })
 
@@ -200,6 +186,15 @@ function filterToolOptions(query: string) {
 function handleToolSelected(model: string) {
   toolSearch.value = ''
   if (store.selectTool(model)) emit('configurationChange')
+}
+
+function filterLocalToolOptions(query: string) {
+  localToolSearch.value = query
+}
+
+function handleMockToolSelected(model: string) {
+  localToolSearch.value = ''
+  if (store.selectMockTool(model)) emit('configurationChange')
 }
 
 function handleWorkpieceSizeChange(value: string) {
