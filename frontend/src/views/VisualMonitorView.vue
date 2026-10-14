@@ -57,7 +57,7 @@
             <template #actions><el-input :model-value="state.sampleKeyword.value" class="sample-search" clearable placeholder="样本编号" @update:model-value="state.setSampleKeyword" /></template>
             <div v-loading="state.sampleLoading.value" class="sample-gallery">
               <button v-for="sample in state.samples.value" :key="sample.id" class="sample-card" :class="{ 'is-active': sample.id === state.selectedSampleId.value }" @click="state.setSample(sample.id)">
-                <span class="sample-thumb"><img :src="sample.imageUrl" :alt="`${sample.id}缩略图`" /><span class="mini-box"></span></span>
+                <span class="sample-thumb"><img :src="sample.imageUrl" :alt="`${sample.id}缩略图`" /></span>
                 <strong>{{ sample.id.slice(-4) }}</strong>
                 <span class="sample-tags"><el-tag size="small" :type="verifyTag(sample.verificationStatus)" effect="plain">{{ verifyLabel(sample.verificationStatus) }}</el-tag><el-tag size="small" :type="correctTag(sample.correctness)" effect="plain">{{ correctnessLabel(sample.correctness) }}</el-tag></span>
               </button>

@@ -1,16 +1,20 @@
-import insertSampleA from '@/assets/modules/insert-sample-a.svg'
-import insertSampleB from '@/assets/modules/insert-sample-b.svg'
+import wear0027 from '@/assets/visual-monitor/wear-0027.jpg'
+import wear0028 from '@/assets/visual-monitor/wear-0028.jpg'
+import wear0029 from '@/assets/visual-monitor/wear-0029.jpg'
+import wear0030 from '@/assets/visual-monitor/wear-0030.jpg'
 import type { DetectionCorrectness, VisualBatch, VisualLog, VisualSample } from '@/features/visual-monitor/types'
 
+const wearImages = [wear0027, wear0028, wear0029, wear0030]
+const samplesPerBatch = 8
 const batchDefinitions = [
   { id: 'B20261004-001', date: '2026-10-04', recordId: 'OPT-20261004-001' },
   { id: 'B20261003-003', date: '2026-10-03', recordId: 'OPT-20261003-003' },
   { id: 'B20261002-002', date: '2026-10-02', recordId: 'OPT-20261002-002' },
 ]
 
-export const visualBatches: VisualBatch[] = batchDefinitions.map(item => ({ ...item, sampleCount: 8, verifiedCount: 0 }))
+export const visualBatches: VisualBatch[] = batchDefinitions.map(item => ({ ...item, sampleCount: samplesPerBatch, verifiedCount: 0 }))
 const initialCorrectness: DetectionCorrectness[] = ['correct', 'correct', 'incorrect', 'correct', 'uncertain', 'correct', 'incorrect', 'correct']
-export const visualSamples: VisualSample[] = batchDefinitions.flatMap((batch, batchIndex) => Array.from({ length: 8 }, (_, index) => {
+export const visualSamples: VisualSample[] = batchDefinitions.flatMap((batch, batchIndex) => Array.from({ length: samplesPerBatch }, (_, index) => {
   const sampleNo = index + 1
   const sampleId = `${batch.id}-S${String(sampleNo).padStart(3, '0')}`
   const className = sampleNo % 3 === 0 ? '刀尖缺口' : sampleNo % 2 === 0 ? '刃口磨损' : '表面崩裂'
@@ -21,7 +25,7 @@ export const visualSamples: VisualSample[] = batchDefinitions.flatMap((batch, ba
     batchId: batch.id,
     recordId: batch.recordId,
     takenAt: `${batch.date} 14:${String(8 + index * 6).padStart(2, '0')}:${String(7 + index * 5).padStart(2, '0')}`,
-    imageUrl: (sampleNo + batchIndex) % 2 ? insertSampleA : insertSampleB,
+    imageUrl: wearImages[(batchIndex * samplesPerBatch + index) % wearImages.length],
     verificationStatus: sampleNo % 3 === 2 ? 'pending' as const : 'verified' as const,
     correctness: initialCorrectness[(sampleNo + batchIndex) % initialCorrectness.length],
     detections: [{
