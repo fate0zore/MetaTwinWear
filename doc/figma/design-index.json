@@ -1,0 +1,50 @@
+{
+  "fileName": "MetaTwinWear · 实时监测首页",
+  "fileKey": "pjD7iWS7Yjx4LtogoiLhbR",
+  "fileUrl": "https://www.figma.com/design/pjD7iWS7Yjx4LtogoiLhbR/MetaTwinWear-%C2%B7-%E5%AE%9E%E6%97%B6%E7%9B%91%E6%B5%8B%E9%A6%96%E9%A1%B5",
+  "localNativeFigAvailable": false,
+  "frames": [
+    {
+      "title": "实时监测",
+      "nodeId": "2:2",
+      "width": 1920,
+      "height": 1246,
+      "preview": "01-realtime-monitor.png"
+    },
+    {
+      "title": "历史数据",
+      "nodeId": "15:830",
+      "width": 1920,
+      "height": 1403,
+      "preview": "02-history.png"
+    },
+    {
+      "title": "刀具管理",
+      "nodeId": "15:831",
+      "width": 1920,
+      "height": 1080,
+      "preview": "03-tool-management.png"
+    },
+    {
+      "title": "视觉监测",
+      "nodeId": "15:832",
+      "width": 1920,
+      "height": 1080,
+      "preview": "04-visual-monitor.png"
+    },
+    {
+      "title": "模型优化",
+      "nodeId": "15:833",
+      "width": 1920,
+      "height": 1155,
+      "preview": "05-model-optimization.png"
+    },
+    {
+      "title": "系统设置",
+      "nodeId": "15:834",
+      "width": 1920,
+      "height": 1080,
+      "preview": "06-system-settings.png"
+    }
+  ]
+}

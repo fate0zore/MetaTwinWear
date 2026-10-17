@@ -100,3 +100,8 @@ curl -N http://localhost:8080/api/v1/monitoring/events
 ## 后续迁至 PostgreSQL
 
 本期没有 PostgreSQL 建表或导入逻辑，也不会接触其他项目数据库。迁移时按 [字段与导出约定](backend/DATA_MIGRATION.md) 新增 PostgreSQL 迁移脚本和导入程序，保留运行、采样的 ID、时间戳与关系。
+
+## Figma 设计稿
+
+本项目的六页设计稿预览、页面索引和 Figma 可编辑原稿链接见 [doc/figma/README.md](doc/figma/README.md)。
+
