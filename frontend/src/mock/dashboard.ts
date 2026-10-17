@@ -1,6 +1,7 @@
-import type { ConfigurationOptions, DashboardState, MonitoringStatistics, ProcessSample, SensorSeries, SignalChannel, TimePoint } from '@/types/dashboard'
+import type { ConfigurationOptions, DashboardState, MonitoringStatistics, ProcessSample, SignalChannel, TimePoint } from '@/types/dashboard'
 import { classifyWearStage } from '@/features/dashboard/wearStages'
 import { findToolProduct, mockToolTypes, toMockToolConfig, toolProductCatalog } from '@/features/tool-management/mock/catalog'
+import { realtimeSignalSamples, type RealtimeSignalSample } from './realtimeSignalData'
 import machiningVideo from '@/assets/dashboard/数控铣床用可转位刀具粗切削注射模镶件.mp4'
 
 const pointCount = 42
@@ -28,17 +29,21 @@ const defaultLocalTool = findToolProduct('2F366-1200-050-TD 1745')!
 
 const timeLabel = (index: number) => `${String(Math.floor(index / 2)).padStart(2, '0')}:${String((index % 2) * 30).padStart(2, '0')}`
 
-const makePoints = (base: number, spread: number, phase = 0): TimePoint[] =>
-  Array.from({ length: pointCount }, (_, index) => ({
-    time: timeLabel(index),
-    value: Number((base + Math.sin(index * 1.35 + phase) * spread * 0.55 + (Math.random() - 0.5) * spread).toFixed(2)),
-  }))
+const makeSignalPoints = (selectValue: (sample: RealtimeSignalSample) => number): TimePoint[] =>
+  realtimeSignalSamples.map((sample, index) => ({ time: timeLabel(index), value: selectValue(sample) }))
 
-const makeChannel = (name: string, color: string, base: number, spread: number, phase: number): SignalChannel => ({
-  name,
-  color,
-  data: makePoints(base, spread, phase),
-})
+const forceMagnitude = (sample: RealtimeSignalSample) => Math.hypot(sample.forceX, sample.forceY, sample.forceZ)
+const vibrationSignalData = makeSignalPoints((sample) => sample.vibration)
+const currentSignalData = makeSignalPoints((sample) => sample.spindleCurrent)
+const soundSignalData = makeSignalPoints((sample) => sample.cuttingSound)
+const forceSignalData = makeSignalPoints(forceMagnitude)
+const forceXData = makeSignalPoints((sample) => sample.forceX)
+const forceYData = makeSignalPoints((sample) => sample.forceY)
+const forceZData = makeSignalPoints((sample) => sample.forceZ)
+const latestAbsoluteValue = (points: TimePoint[]) => Math.abs(points[points.length - 1]?.value ?? 0)
+const peakAbsoluteValue = (points: TimePoint[]) => Math.max(...points.map((point) => Math.abs(point.value)))
+
+const makeChannel = (name: string, color: string, data: TimePoint[]): SignalChannel => ({ name, color, data })
 
 const wearHistory = Array.from({ length: 31 }, (_, index) => ({
   time: `${index}`,
@@ -94,41 +99,41 @@ export const initialDashboardState: DashboardState = {
       id: 'vibration',
       title: '主轴振动',
       unit: 'm/s²',
-      current: 2.48,
-      peak: 1.87,
+      current: latestAbsoluteValue(vibrationSignalData),
+      peak: peakAbsoluteValue(vibrationSignalData),
       color: '#00cfff',
-      data: makePoints(0, 6.5, 0.2),
+      data: vibrationSignalData,
     },
     {
       id: 'current',
       title: '主轴电流',
       unit: 'A',
-      current: 45.3,
-      peak: 28.7,
+      current: latestAbsoluteValue(currentSignalData),
+      peak: peakAbsoluteValue(currentSignalData),
       color: '#1fd58a',
-      data: makePoints(32, 10, 1),
+      data: currentSignalData,
     },
     {
       id: 'sound',
       title: '切削声音',
       unit: 'dB',
-      current: 92.7,
-      peak: 72.3,
+      current: latestAbsoluteValue(soundSignalData),
+      peak: peakAbsoluteValue(soundSignalData),
       color: '#ac70ff',
-      data: makePoints(76, 27, 2),
+      data: soundSignalData,
     },
     {
       id: 'force',
       title: '切削力',
       unit: 'N',
-      current: 356,
-      peak: 298,
+      current: latestAbsoluteValue(forceSignalData),
+      peak: peakAbsoluteValue(forceSignalData),
       color: '#39b8ff',
-      data: makePoints(300, 70, 0.4),
+      data: forceSignalData,
       channels: [
-        makeChannel('Fx', '#3eb7ff', 310, 66, 0.2),
-        makeChannel('Fy', '#ffb54a', 240, 58, 1.5),
-        makeChannel('Fz', '#1fd58a', 168, 46, 2.3),
+        makeChannel('Fx', '#3eb7ff', forceXData),
+        makeChannel('Fy', '#ffb54a', forceYData),
+        makeChannel('Fz', '#1fd58a', forceZData),
       ],
     },
   ],

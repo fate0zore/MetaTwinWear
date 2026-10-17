@@ -1,15 +1,14 @@
 import { defineStore } from 'pinia'
 
 import { cloneDashboardState } from '@/mock/dashboard'
+import { realtimeSignalSamples } from '@/mock/realtimeSignalData'
 import type { ApiSnapshot, ConfigurationOptions, DashboardLogLevel, DashboardState, ProcessSample, SensorSeries, SignalChannel, TimePoint, ToolCatalogItem, ToolConfig, WorkpieceConfig } from '@/types/dashboard'
 import { classifyWearStage } from '@/features/dashboard/wearStages'
 import { normalizeWorkpieceSize } from '@/features/dashboard/workpieceDimensions'
 import { findToolProduct, toMockToolConfig } from '@/features/tool-management/mock/catalog'
 
-const nextPoint = (lastValue: number, index: number, drift = 0, amplitude = 1): number =>
-  Number((lastValue + Math.sin(index * 1.27) * amplitude * 0.48 + (Math.random() - 0.5) * amplitude + drift).toFixed(2))
-
 let dashboardLogSequence = 0
+let mockSignalSampleIndex = 0
 
 const wearStatusLabel = (status: DashboardState['wear']['status']) =>
   status === 'danger' ? '高风险' : status === 'warning' ? '较高风险' : '正常'
@@ -48,17 +47,47 @@ const pushProcessSample = (points: ProcessSample[], sample: ProcessSample) => {
   if (points.length > 42) points.shift()
 }
 
-const updateSignal = (signal: SensorSeries, index: number) => {
-  const previous = signal.data[signal.data.length - 1]?.value ?? signal.current
-  const next = nextPoint(previous, index, signal.id === 'current' ? 0.08 : 0, signal.id === 'vibration' ? 7 : signal.id === 'sound' ? 13 : 18)
-  pushPoint(signal.data, next)
-  signal.current = Number(Math.abs(next).toFixed(2))
-  signal.peak = Number((signal.current * 0.76).toFixed(2))
+const nextSignalTime = (lastTime: string) => {
+  const match = /^(\d{2}):(\d{2})$/.exec(lastTime)
+  if (!match) return lastTime
+  const totalMinutes = (Number(match[1]) * 60 + Number(match[2]) + 30) % (24 * 60)
+  return `${String(Math.floor(totalMinutes / 60)).padStart(2, '0')}:${String(totalMinutes % 60).padStart(2, '0')}`
+}
 
-  signal.channels?.forEach((channel: SignalChannel, channelIndex: number) => {
-    const channelPrevious = channel.data[channel.data.length - 1]?.value ?? 0
-    pushPoint(channel.data, nextPoint(channelPrevious, index + channelIndex, 0, 18 - channelIndex * 3))
-  })
+const pushSignalPoint = (points: TimePoint[], value: number) => {
+  const lastTime = points[points.length - 1]?.time ?? '00:00'
+  points.push({ time: nextSignalTime(lastTime), value })
+  if (points.length > 42) points.shift()
+}
+
+const roundedAbsoluteValue = (value: number) => Number(Math.abs(value).toFixed(2))
+const peakAbsoluteValue = (points: TimePoint[]) => Number(Math.max(...points.map((point) => Math.abs(point.value))).toFixed(2))
+
+const updateSignal = (signal: SensorSeries, sample: (typeof realtimeSignalSamples)[number]) => {
+  if (signal.id === 'force') {
+    const channelValues: Record<string, number> = { Fx: sample.forceX, Fy: sample.forceY, Fz: sample.forceZ }
+    signal.channels?.forEach((channel: SignalChannel) => {
+      const value = channelValues[channel.name]
+      if (value !== undefined) pushSignalPoint(channel.data, value)
+    })
+    const resultant = Math.hypot(sample.forceX, sample.forceY, sample.forceZ)
+    pushSignalPoint(signal.data, resultant)
+    signal.current = roundedAbsoluteValue(resultant)
+    signal.peak = peakAbsoluteValue(signal.data)
+    return
+  }
+
+  const value = signal.id === 'vibration'
+    ? sample.vibration
+    : signal.id === 'current'
+      ? sample.spindleCurrent
+      : signal.id === 'sound'
+        ? sample.cuttingSound
+        : undefined
+  if (value === undefined) return
+  pushSignalPoint(signal.data, value)
+  signal.current = roundedAbsoluteValue(value)
+  signal.peak = peakAbsoluteValue(signal.data)
 }
 
 const localConfigurationKey = (source: DashboardState['dataSource']) =>
@@ -301,6 +330,7 @@ export const useDashboardStore = defineStore('dashboard', {
     },
     reset() {
       const sessionLogs = [...this.logs]
+      mockSignalSampleIndex = 0
       Object.assign(this, cloneDashboardState(), { logs: sessionLogs })
       this.configurationInitialized = true
       this.persistLocalConfiguration()
@@ -309,7 +339,11 @@ export const useDashboardStore = defineStore('dashboard', {
     tick() {
       const previousWear = { stage: this.wear.stage, status: this.wear.status }
       const index = this.wearHistory.length
-      this.signals.forEach((signal) => updateSignal(signal, index))
+      const signalSample = realtimeSignalSamples[mockSignalSampleIndex]
+      if (signalSample) {
+        this.signals.forEach((signal) => updateSignal(signal, signalSample))
+        mockSignalSampleIndex = (mockSignalSampleIndex + 1) % realtimeSignalSamples.length
+      }
 
       const previousProcess = this.processHistory[this.processHistory.length - 1] ?? {
         time: '',
