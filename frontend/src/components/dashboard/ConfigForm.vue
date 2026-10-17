@@ -1,5 +1,5 @@
 <template>
-  <DashboardPanel title="加工参数与对象配置" :icon="Tools">
+  <DashboardPanel class="config-form-panel" title="加工参数与对象配置" :icon="Tools">
     <template #actions>
       <span class="panel-source-badge"><i></i>{{ store.dataSource === 'api' && store.apiConnection !== 'connected' ? '后端连接中断' : store.monitoring ? '设备监听中' : '设备已连接' }}</span>
     </template>
@@ -104,8 +104,8 @@
       </div>
     </div>
 
-    <div class="tool-preview-card">
-      <div class="tool-photo tool-catalog-image">
+    <section class="tool-detail-card" aria-label="当前刀具详情">
+      <div class="tool-detail-image tool-catalog-image">
         <img
           v-if="displayedToolImage && !imageFailed"
           :key="displayedToolImage"
@@ -115,14 +115,14 @@
         >
         <span v-else class="tool-image-feedback" role="img" aria-label="刀具图片暂不可用">刀具图片暂不可用</span>
       </div>
-      <div class="tool-preview-copy">
+      <div class="tool-detail-copy">
         <strong>{{ store.tool.model }}</strong>
-        <span v-if="store.dataSource === 'api'">{{ store.tool.material }} · {{ store.tool.toothCount }} 齿</span>
+        <span v-if="store.dataSource === 'api'">{{ store.tool.type }} · {{ store.tool.material }} · {{ store.tool.toothCount }} 齿</span>
         <span v-else>{{ localSelectedTool?.name }} · {{ localSelectedTool?.type }}</span>
-        <small v-if="store.dataSource === 'api' && selectedTool">{{ selectedTool.description }}</small>
-        <small v-else-if="localSelectedTool">{{ localSelectedTool.specification }} · {{ localSelectedTool.coatingLabel }}：{{ localSelectedTool.coating }} · {{ localSelectedTool.compatibleMaterials }}</small>
+        <small v-if="store.dataSource === 'api'">{{ selectedTool?.description || `${store.tool.diameter} mm · ${store.tool.length} mm · ${store.tool.toothCount} 齿` }}</small>
+        <small v-else-if="localSelectedTool">适用加工：{{ localSelectedTool.applications }} · 适用材料：{{ localSelectedTool.compatibleMaterials }}</small>
       </div>
-    </div>
+    </section>
 
     <div class="device-meta-grid">
       <div><span>数据来源</span><strong>{{ store.dataSource === 'api' ? '后端模拟器' : '本地模拟器' }}</strong></div>
